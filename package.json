@@ -2,10 +2,13 @@
   "name": "telegpt",
   "version": "1.0.0",
   "description": "Interacting with the Telegram Client through GPT prompts",
-  "main": "agent.js",
+  "main": "./dist/index.js",
+  "files": [
+    "dist/"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node agent.js"
+    "build": "tsc --declaration --outDir dist/",
+    "start": "tsx --experimental-wasm-modules -r dotenv/config src/index.ts"
   },
   "author": "",
   "license": "ISC",
@@ -18,6 +21,7 @@
     "zod": "^3.22.2"
   },
   "devDependencies": {
+    "@tsconfig/recommended": "^1.0.2",
     "typescript": "^5.2.2"
   }
 }
