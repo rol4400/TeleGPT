@@ -9,6 +9,8 @@ const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
 const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require ("langchain/tools");
+const { PlanAndExecuteAgentExecutor } = require ("langchain/experimental/plan_and_execute");
+
 
 // Telegram MTPROTO API Configuration
 const {Api, TelegramClient} = require('telegram');
@@ -67,7 +69,35 @@ const searchTelegramByChat = async ({ query, chat_id }:any) => {
 	  } catch (error) {
 		return JSON.stringify(error);
 	  }
+}
 
+const getContactsList = async ({ query }:any) => {
+	var result = await client.invoke(
+		new Api.contacts.GetContacts({})
+	);
+	
+	const formattedUsers = users.map(user => {
+		const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A';
+		const phoneNumber = user.phone || 'N/A';
+		const userID = Number(user.id.value) || 'N/A';
+	  
+		return {
+		  fullName,
+		  phoneNumber,
+		  userID,
+		};
+	  });
+
+	  return formattedUsers;
+}
+
+const getChatroomAndMessage = async ({ chatroom_query, message_query }:any) => {
+
+	console.log(chatroom_query);
+	var chatroom = JSON.parse(await searchForTelegramChatroom({"query": chatroom_query})).ChatID;
+	var message = await searchTelegramByChat({"query": message_query, "chat_id": chatroom})
+
+	return message;
 }
 
 const searchTelegramGlobal = async ({ query }:any) => {
@@ -131,7 +161,7 @@ const formatChatSearchResults = async (result: any) => {
 			}
 
 			// Define a maximum messageText length (e.g., 100 characters)
-			const maxMessageTextLength = 100;
+			const maxMessageTextLength = 400;
 			messageText = message.message || '';
 
 			// Truncate messageText if it exceeds the maximum length
@@ -173,17 +203,34 @@ const formatChatSearchResults = async (result: any) => {
 				query: z.string().describe("The search query, keep it brief and simple"),
 			}),
 			func: searchTelegramGlobal
+		}),
+
+		new DynamicStructuredTool({
+			name: "telegram-get-contacts-list",
+			description: "Gets a list of all contacts. The output is formatted full name, phone number, then a 9 digit userID for each contact",
+			schema: z.object({}),
+			func: getContactsList
+		}),
+
+		new DynamicStructuredTool({
+			name: "telegram-get-chatroom-and-search",
+			description: "Firstly search for a chatroom using chatroom_query then in that chatroom search for a message using message_query",
+			schema: z.object({
+				chatroom_query: z.string().describe("The search query for finding the chatroom to look in"),
+				message_query: z.string().describe("The search query for what to search for after the chatroom is firstly found"),
 			}),
+			func: getChatroomAndMessage
+		}),
 
 		new DynamicStructuredTool({
 			name: "telegram-message-search-by-chatroom",
-			description: "Searches through a specified telegram chatroom for the given query and returns the results in order of relevance. Use this instead of the telegram-message-search-global option ONLY if a 9 digit chat_id is known. chat_id MUST be given as a negative 9 digit number. Query can't be blank",
+			description: "Searches through a specified telegram chatroom for the given query and returns the results in order of relevance. Use this option ONLY if a 9 digit chat_id from telegram-chatroom-search is known. chat_id MUST be given as a negative 9 digit number. Query can't be blank",
 			schema: z.object({
 				query: z.string().describe("The search query, keep it brief and simple. Can't be empty"),
 				chat_id: z.number().describe("The ID of the chatroom. It MUST be a negative number with 9 digits")
 			}),
 			func: searchTelegramByChat
-			}),
+		}),
 
 		new DynamicStructuredTool({
 			name: "telegram-chatroom-search",
@@ -192,11 +239,11 @@ const formatChatSearchResults = async (result: any) => {
 				query: z.string().describe("The search query, keep it brief and simple"),
 			}),
 			func: searchForTelegramChatroom
-			}),
+		}),
 	];
 
   	const executor = await initializeAgentExecutorWithOptions(tools, model, {
-		agentType: "structured-chat-zero-shot-react-description",
+		agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
 		verbose: true,
 		memory: new BufferMemory({
 		memoryKey: "chat_history",
