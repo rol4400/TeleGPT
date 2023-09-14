@@ -7,10 +7,10 @@ const { ChatOpenAI } = require("langchain/chat_models/openai");
 const { initializeAgentExecutorWithOptions } = require("langchain/agents");
 const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
+// const { SystemMessage } = require("langchain/schema");
 const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require ("langchain/tools");
 const { PlanAndExecuteAgentExecutor } = require ("langchain/experimental/plan_and_execute");
-
 
 // Telegram MTPROTO API Configuration
 const {Api, TelegramClient} = require('telegram');
@@ -21,7 +21,7 @@ const apiHash = process.env.TELE_API_HASH;
 const session = new StringSession(process.env.TELE_STR_SESSION);
 const client = new TelegramClient(session, apiId, apiHash, {});
 
-var dateLimit = Math.floor(Date.now()/1000);
+var dateLimit = 1694662783; //Math.floor(Date.now()/1000);
 
 // DEV Input
 const input = require("input"); // npm i input
@@ -33,6 +33,8 @@ const searchForTelegramChatroom = async ({ query }:any) => {
           limit: 5,
         })
       );
+
+	  console.log(result);
 
       const query_result:object = result.chats.map(chat => {
         return {
@@ -69,8 +71,53 @@ const searchTelegramByChat = async ({ query, chat_id }:any) => {
 
 		return JSON.stringify(await formatChatSearchResults(result));
 	  } catch (error) {
+		if (error.code == 400) {
+			return "The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again"
+		}
 		return JSON.stringify(error);
 	  }
+}
+
+const getChatHistory = async ({chat_id}:any) => {
+	try{
+	  var result = await client.invoke(
+		new Api.messages.GetHistory({
+		  peer: new Api.InputPeerChat({
+			chatId: Number(chat_id)
+		  }),
+		  offsetId: 0,
+		  offsetDate: 0,
+		  addOffset: 0,
+		  limit: 35,
+		  maxId: 0,
+		  minId: 0,
+		  hash: BigInt("-4156887774564"),
+		})
+	  );
+	
+	  var formatted = result.messages.map(async (message) => {
+	
+		// Find the user who sent the message
+		var user = result.users.find(user => result.messages[0].fromId.userId.value == user.id)
+	
+		// Compute their username
+		const firstName = user?.firstName || 'N/A';
+		const lastName = user?.lastName || '';
+	
+		// Create the username by combining firstName and lastName
+		const username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A'
+	
+		return {
+			message_text: message.message,
+			message_date: message.date,
+			message_from: username
+		}
+	  });
+
+	  return JSON.stringify(formatted);
+	} catch (error) {
+		return JSON.stringify(error); // Let GPT interpret it how it likes
+	}
 }
 
 const getUnreadMessages = async ({ }:any) => {
@@ -80,7 +127,7 @@ const getUnreadMessages = async ({ }:any) => {
 			  offsetDate: 0,
 			  offsetId: 0,
 			  offsetPeer: "username",
-			  limit: 30,
+			  limit: 40,
 			  hash: BigInt("-4156887774564"),
 			  excludePinned: true,
 			  folderId: 0,
@@ -89,50 +136,64 @@ const getUnreadMessages = async ({ }:any) => {
 
 		// Remove already read dates
 		var filteredDialogs = result.dialogs.filter(dialog => {
-		var message = result.messages.find(message => message.id === dialog.topMessage);
-		return (message.date > dateLimit);
+			var message = result.messages.find(message => message.id === dialog.topMessage);
+			return (message.date > dateLimit && dialog.unreadCount > 0);
 		});
+
+		console.log("Filtered:");
+		console.log(filteredDialogs);
 
 		var mapped = filteredDialogs.map(dialog => {
 			var chat;
 			var message = result.messages.find(message => message.id === dialog.topMessage).message;
 
 			var username = "Unknown Chat";
+			var chat_id = 0;
 			
 			switch (dialog.peer.className) {
 				case 'PeerChannel':
-				chat = result.chats.find(chat => chat.id.value === dialog.peer.channelId.value);
-				break;
+					chat = result.chats.find(chat => chat.id.value === dialog.peer.channelId.value);
+					chat_id = -Number(chat.id.value);
+					break;
+
 				case 'PeerUser':
-				user = result.users.find(user => user.id.value === dialog.peer.userId.value);
+					var user = result.users.find(user => user.id.value === dialog.peer.userId.value);
 
-				const firstName = user?.firstName || 'N/A';
-				const lastName = user?.lastName || '';
+					const firstName = user?.firstName || 'N/A';
+					const lastName = user?.lastName || '';
 
-				// Create the username by combining firstName and lastName
-				username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
+					// Create the username by combining firstName and lastName
+					username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
 
-				break;
+					chat_id = Number(dialog.peer.userId.value);
+					break;
+
 				case 'PeerChat':
-				chat = result.chats.find(chat => chat.id.value === dialog.peer.chatId.value);
-				break;
+					chat = result.chats.find(chat => chat.id.value === dialog.peer.chatId.value);
+					chat_id = -Number(chat.id.value);
+					break;
+
 				default:
-				chat = null; // Handle any other cases as needed
-				break;
+					chat = null; // Handle any other cases as needed
+					break;
 			}
 			
 			return {
 				"Title": chat ? chat.title : username,
-				"chat_id": chat ? -Number(chat.id.value) : -1, // Default chat_id value
+				"chat_id": chat_id, // Default chat_id value
 				"number_unread": dialog.unreadCount, // Default top_message_id value
+				"top_messaage": message
 			};
 		});
 
+		console.log("Mapped:");
+		console.log(mapped);
+
 		// Update the dateLimit so next time this function is run it will give new unread messages
 		// TODO: Make this value persistent
-		dateLimit = Math.floor(Date.now()/1000);
+		//dateLimit = Math.floor(Date.now()/1000);
 
-		return JSON.stringify(await formatChatSearchResults(mapped));
+		return JSON.stringify(mapped);
 	  } catch (error) {
 		return JSON.stringify(error);
 	  }
@@ -143,7 +204,7 @@ const getContactsList = async ({ query }:any) => {
 		new Api.contacts.GetContacts({})
 	);
 	
-	const formattedUsers = users.map(user => {
+	const formattedUsers = result.users.map(user => {
 		const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A';
 		const phoneNumber = user.phone || 'N/A';
 		const userID = Number(user.id.value) || 'N/A';
@@ -155,7 +216,7 @@ const getContactsList = async ({ query }:any) => {
 		};
 	  });
 
-	  return formattedUsers;
+	  return JSON.stringify("If the answer is not found in this response, you MUST also try searching chatrooms related to the query. Results: " + JSON.stringify(formattedUsers));
 }
 
 const getChatroomAndMessage = async ({ chatroom_query, message_query }:any) => {
@@ -200,14 +261,15 @@ const formatChatSearchResults = async (result: any) => {
 		
 		try {
 			var username:string = "";
-			var chat:string;
-			var messageText:string;
+			var chat:string = "";
+			var messageText:string = "";
 
 			// Check if peerId has channelId, otherwise, set chat to 'N/A'
 			if (message.peerId.className == "PeerChannel") {
-			chat = result.chats.find(chat => chat.id.value === message.peerId.channelId.value).title
+				chat = result.chats.find(chat => chat.id.value === message.peerId.channelId.value).title;
+			}
 
-			if (message.fromId.className == "PeerUser") {
+			else if (message.fromId.className == "PeerUser") {
 					const user = result.users.find(user => user.id.value === message.fromId.userId.value)
 					const firstName = user?.firstName || 'N/A';
 					const lastName = user?.lastName || '';
@@ -215,7 +277,6 @@ const formatChatSearchResults = async (result: any) => {
 					// Create the username by combining firstName and lastName
 					username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
 
-			}
 			} else {
 					chat = "N/A"
 					const user = result.users.find(user => user.id.value === message.peerId.userId.value)
@@ -255,11 +316,17 @@ const formatChatSearchResults = async (result: any) => {
 	// Connect to the Telegram API
 	await client.connect();
     
-	// const openai = new OpenAIApi({
-	// 	api_key: process.env.OPEN_AI_KEY
-	// });
+	// Setup the OpenAI Model
+	var prompt_prefix = `\
+		You are a helpful AI assistant designed to help me manage my messages on telegram. If you can't find the answer please always try using many differnet tools before saying there was no result"
+	`;
 
-	const model = new ChatOpenAI({ temperature: 0 });
+	//var prefix_messages= [new SystemMessage(prompt_prefix)]
+	const model = new ChatOpenAI({ 
+		temperature: 0.1
+	});
+
+	// Setup the custom tools
 	const tools = [
 		new Calculator(),
 		
@@ -273,6 +340,15 @@ const formatChatSearchResults = async (result: any) => {
 		}),
 
 		new DynamicStructuredTool({
+			name: "telegram-get-chatroom-history",
+			description: "Returns a history of the most recent messages in a given chatroom specified by chat_id. Use this option ONLY if a 9 digit chat_id from telegram-chatroom-search is known. chat_id MUST be given as a negative 9 digit number.",
+			schema: z.object({
+				chat_id: z.number().describe("The ID of the chatroom. It MUST be a negative number with 9 digits")
+			}),
+			func: getChatHistory
+		}),
+
+		new DynamicStructuredTool({
 			name: "telegram-get-contacts-list",
 			description: "Gets a list of all contacts. The output is formatted full name, phone number, then a 9 digit userID for each contact",
 			schema: z.object({}),
@@ -281,9 +357,9 @@ const formatChatSearchResults = async (result: any) => {
 
 		new DynamicStructuredTool({
 			name: "telegram-get-unread-messages",
-			description: "Gets a list of all unread messages and recent updates. The output is formatted title (title of the chat room the message is in), chat_id which is the 9 digit ID of the chat, and number_unread which is how many unread messages there are",
+			description: "Gets a list of all unread messages and recent updates. The output is formatted title (title of the chat room the message is in), chat_id which is the 9 digit ID of the chat, and number_unread which is how many unread messages there are, finally top_messaage is the most recent unread message content in that chat room",
 			schema: z.object({}),
-			func: getContactsList
+			func: getUnreadMessages
 		}),
 
 		new DynamicStructuredTool({

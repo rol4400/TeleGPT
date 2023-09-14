@@ -274,3 +274,46 @@ new Api.updates.GetChannelDifference({
 })
 );
 
+
+
+
+
+result = await client.invoke(
+    new Api.messages.GetFullChat({
+      chatId: Number(780901789),
+    })
+  );
+
+  result = await client.invoke(
+    new Api.messages.GetHistory({
+      peer: new Api.InputPeerChat({
+        chatId: Number(780901789)
+      }),
+      offsetId: 0,
+      offsetDate: 0,
+      addOffset: 0,
+      limit: 10,
+      maxId: 0,
+      minId: 0,
+      hash: BigInt("-4156887774564"),
+    })
+  );
+
+  Data = result.messages.map(async (message) => {
+
+    // Find the user who sent the message
+    var user = result.users.find(user => result.messages[0].fromId.userId.value == user.id)
+
+    // Compute their username
+    const firstName = user?.firstName || 'N/A';
+    const lastName = user?.lastName || '';
+
+    // Create the username by combining firstName and lastName
+    const username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A'
+
+    return {
+        message_text: message.message,
+        message_date: message.date,
+        message_from: username
+    }
+  })
