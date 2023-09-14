@@ -317,7 +317,7 @@ const formatChatSearchResults = async (result: any) => {
 	return query_result.reverse();
 }
 
-(async function run() {
+(async function() {
 
 	// Connect to the Telegram API
 	await client.connect();
@@ -326,7 +326,6 @@ const formatChatSearchResults = async (result: any) => {
 	const model = new ChatOpenAI({ 
 		temperature: 0.1
 	});
-
 	
 	// Setup the custom tools
 	const tools = [
@@ -411,17 +410,12 @@ const formatChatSearchResults = async (result: any) => {
 		},
 	});
 
-	while (true) {
-		const prompt = await input.text("Please enter the prompt: ") 
-		const result = await executor.call({ input: prompt });
-	
-		console.log(result);
+	module.exports.runQuery = async function(query:string) {
+		return await run(executor, query);
 	}
+})()
 
-	// const result2 = await executor.call({
-	// 	input: `what is that number squared?`,
-	// });
-
-	// console.log(result2);
-
-})();
+async function run(executor:any, query:string) {
+	const result = await executor.call({ input: query });
+	return result;
+};
