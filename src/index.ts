@@ -25,8 +25,6 @@ bot.on('voice', (ctx:any) => {
             
             axios.post(process.env.SPEECH_TO_TEXT_URL + "/v1/recognize", get_response.data, postHeaders)
             .then(async (post_response:any) => {
-                // console.log(JSON.stringify(post_response.data));
-
                 var answer = await agent.runQuery(post_response.data.results[0].alternatives[0].transcript);
                   return ctx.reply(answer.output)
               })
@@ -36,6 +34,11 @@ bot.on('voice', (ctx:any) => {
           
           });
     })
+})
+
+bot.on('text', async (ctx:any) => {
+    var answer = await agent.runQuery(ctx.message.text);
+    return ctx.reply(answer.output)
 })
 
 bot.launch()

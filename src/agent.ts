@@ -394,7 +394,7 @@ const formatChatSearchResults = async (result: any) => {
 	];
 
 	// Setup the OpenAI Model
-	var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. If you can't find the answer using one tool you MUST use as many other tools as you can before deciding there is no answer`;
+	var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. My name is Ryan. If you can't find the answer using one tool you MUST use as many other tools as you can before deciding there is no answer`;
 
   	const executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
