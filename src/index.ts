@@ -21,6 +21,8 @@ const apiHash = process.env.TELE_API_HASH;
 const session = new StringSession(process.env.TELE_STR_SESSION);
 const client = new TelegramClient(session, apiId, apiHash, {});
 
+var dateLimit = Math.floor(Date.now()/1000);
+
 // DEV Input
 const input = require("input"); // npm i input
 
@@ -66,6 +68,71 @@ const searchTelegramByChat = async ({ query, chat_id }:any) => {
 		  );		
 
 		return JSON.stringify(await formatChatSearchResults(result));
+	  } catch (error) {
+		return JSON.stringify(error);
+	  }
+}
+
+const getUnreadMessages = async ({ }:any) => {
+	try {
+		var result = await client.invoke(
+			new Api.messages.GetDialogs({
+			  offsetDate: 0,
+			  offsetId: 0,
+			  offsetPeer: "username",
+			  limit: 30,
+			  hash: BigInt("-4156887774564"),
+			  excludePinned: true,
+			  folderId: 0,
+			})
+		  );
+
+		// Remove already read dates
+		var filteredDialogs = result.dialogs.filter(dialog => {
+		var message = result.messages.find(message => message.id === dialog.topMessage);
+		return (message.date > dateLimit);
+		});
+
+		var mapped = filteredDialogs.map(dialog => {
+			var chat;
+			var message = result.messages.find(message => message.id === dialog.topMessage).message;
+
+			var username = "Unknown Chat";
+			
+			switch (dialog.peer.className) {
+				case 'PeerChannel':
+				chat = result.chats.find(chat => chat.id.value === dialog.peer.channelId.value);
+				break;
+				case 'PeerUser':
+				user = result.users.find(user => user.id.value === dialog.peer.userId.value);
+
+				const firstName = user?.firstName || 'N/A';
+				const lastName = user?.lastName || '';
+
+				// Create the username by combining firstName and lastName
+				username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
+
+				break;
+				case 'PeerChat':
+				chat = result.chats.find(chat => chat.id.value === dialog.peer.chatId.value);
+				break;
+				default:
+				chat = null; // Handle any other cases as needed
+				break;
+			}
+			
+			return {
+				"Title": chat ? chat.title : username,
+				"chat_id": chat ? -Number(chat.id.value) : -1, // Default chat_id value
+				"number_unread": dialog.unreadCount, // Default top_message_id value
+			};
+		});
+
+		// Update the dateLimit so next time this function is run it will give new unread messages
+		// TODO: Make this value persistent
+		dateLimit = Math.floor(Date.now()/1000);
+
+		return JSON.stringify(await formatChatSearchResults(mapped));
 	  } catch (error) {
 		return JSON.stringify(error);
 	  }
@@ -208,6 +275,13 @@ const formatChatSearchResults = async (result: any) => {
 		new DynamicStructuredTool({
 			name: "telegram-get-contacts-list",
 			description: "Gets a list of all contacts. The output is formatted full name, phone number, then a 9 digit userID for each contact",
+			schema: z.object({}),
+			func: getContactsList
+		}),
+
+		new DynamicStructuredTool({
+			name: "telegram-get-unread-messages",
+			description: "Gets a list of all unread messages and recent updates. The output is formatted title (title of the chat room the message is in), chat_id which is the 9 digit ID of the chat, and number_unread which is how many unread messages there are",
 			schema: z.object({}),
 			func: getContactsList
 		}),
