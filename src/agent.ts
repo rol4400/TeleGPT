@@ -41,7 +41,7 @@ const searchForTelegramChatroom = async ({ query }:any) => {
 
 	  console.log(result);
 
-      const query_result:object = result.chats.map(chat => {
+      const query_result:any = result.chats.map((chat:any) => {
         return {
 			"Title": chat.title,
 			"ChatID": -Number(chat.id.value)
@@ -75,7 +75,7 @@ const searchTelegramByChat = async ({ query, chat_id }:any) => {
 		  );		
 
 		return JSON.stringify(await formatChatSearchResults(result));
-	  } catch (error) {
+	  } catch (error:any) {
 		if (error.code == 400) {
 			return "The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again"
 		}
@@ -116,7 +116,7 @@ const getChatHistory = async ({chat_id}:any) => {
 	  var result = await client.invoke(
 		new Api.messages.GetHistory({
 		  peer: new Api.InputPeerChat({
-			chatId: Number(chat_id)
+			chatId: -Number(chat_id)
 		  }),
 		  offsetId: 0,
 		  offsetDate: 0,
@@ -128,10 +128,10 @@ const getChatHistory = async ({chat_id}:any) => {
 		})
 	  );
 	
-	  var formatted = result.messages.map(async (message) => {
+	  var formatted = result.messages.map(async (message:any) => {
 	
 		// Find the user who sent the message
-		var user = result.users.find(user => result.messages[0].fromId.userId.value == user.id)
+		var user = result.users.find((user:any) => result.messages[0].fromId.userId.value == user.id)
 	
 		// Compute their username
 		const firstName = user?.firstName || 'N/A';
@@ -168,29 +168,29 @@ const getUnreadMessages = async ({ }:any) => {
 		  );
 
 		// Remove already read dates
-		var filteredDialogs = result.dialogs.filter(dialog => {
-			var message = result.messages.find(message => message.id === dialog.topMessage);
+		var filteredDialogs = result.dialogs.filter((dialog:any) => {
+			var message = result.messages.find((message:any) => message.id === dialog.topMessage);
 			return (message.date > dateLimit && dialog.unreadCount > 0);
 		});
 
 		console.log("Filtered:");
 		console.log(filteredDialogs);
 
-		var mapped = filteredDialogs.map(dialog => {
+		var mapped = filteredDialogs.map((dialog:any) => {
 			var chat;
-			var message = result.messages.find(message => message.id === dialog.topMessage).message;
+			var message = result.messages.find((message:any) => message.id === dialog.topMessage).message;
 
 			var username = "Unknown Chat";
 			var chat_id = 0;
 			
 			switch (dialog.peer.className) {
 				case 'PeerChannel':
-					chat = result.chats.find(chat => chat.id.value === dialog.peer.channelId.value);
+					chat = result.chats.find((chat:any) => chat.id.value === dialog.peer.channelId.value);
 					chat_id = -Number(chat.id.value);
 					break;
 
 				case 'PeerUser':
-					var user = result.users.find(user => user.id.value === dialog.peer.userId.value);
+					var user = result.users.find((user:any) => user.id.value === dialog.peer.userId.value);
 
 					const firstName = user?.firstName || 'N/A';
 					const lastName = user?.lastName || '';
@@ -202,7 +202,7 @@ const getUnreadMessages = async ({ }:any) => {
 					break;
 
 				case 'PeerChat':
-					chat = result.chats.find(chat => chat.id.value === dialog.peer.chatId.value);
+					chat = result.chats.find((chat:any) => chat.id.value === dialog.peer.chatId.value);
 					chat_id = -Number(chat.id.value);
 					break;
 
@@ -232,12 +232,12 @@ const getUnreadMessages = async ({ }:any) => {
 	  }
 }
 
-const getContactsList = async ({ query }:any) => {
+const getContactsList = async () => {
 	var result = await client.invoke(
 		new Api.contacts.GetContacts({})
 	);
 	
-	const formattedUsers = result.users.map(user => {
+	const formattedUsers = result.users.map((user:any) => {
 		const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A';
 		const phoneNumber = user.phone || 'N/A';
 		const userID = Number(user.id.value) || 'N/A';
@@ -247,15 +247,15 @@ const getContactsList = async ({ query }:any) => {
 		  phoneNumber,
 		  userID,
 		};
-	  });
+	});
 
-	  // Limit the response to 400 characters
-	  var response = JSON.stringify(formattedUsers);
-		if (response.length > 4000) {
-			return response.slice(0, 4000);
-		}
+	// Limit the response to 400 characters
+	var response = JSON.stringify(formattedUsers);
+	if (response.length > 4000) {
+		return response.slice(0, 4000);
+	}
 
-	  return JSON.stringify(response);
+	return response;
 }
 
 const getChatroomAndMessage = async ({ chatroom_query, message_query }:any) => {
@@ -295,7 +295,7 @@ const formatChatSearchResults = async (result: any) => {
 
 	console.log(result);
 
-	const query_result = result.messages.map(message => {
+	const query_result = result.messages.map((message:any) => {
 		//result.users.find(user => user.id === message.fromId)?.username || 'N/A';
 		
 		try {
@@ -305,11 +305,11 @@ const formatChatSearchResults = async (result: any) => {
 
 			// Check if peerId has channelId, otherwise, set chat to 'N/A'
 			if (message.peerId.className == "PeerChannel") {
-				chat = result.chats.find(chat => chat.id.value === message.peerId.channelId.value).title;
+				chat = result.chats.find((chat:any) => chat.id.value === message.peerId.channelId.value).title;
 			}
 
 			else if (message.fromId.className == "PeerUser") {
-					const user = result.users.find(user => user.id.value === message.fromId.userId.value)
+					const user = result.users.find((user:any) => user.id.value === message.fromId.userId.value)
 					const firstName = user?.firstName || 'N/A';
 					const lastName = user?.lastName || '';
 
@@ -318,13 +318,12 @@ const formatChatSearchResults = async (result: any) => {
 
 			} else {
 					chat = "N/A"
-					const user = result.users.find(user => user.id.value === message.peerId.userId.value)
+					const user = result.users.find((user:any) => user.id.value === message.peerId.userId.value)
 					const firstName = user?.firstName || 'N/A';
 					const lastName = user?.lastName || '';
 
 					// Create the username by combining firstName and lastName
 					username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
-
 			}
 
 			// Define a maximum messageText length (e.g., 100 characters)
@@ -341,7 +340,10 @@ const formatChatSearchResults = async (result: any) => {
 				chat,
 				messageText,
 			};
-		} catch (error) {}
+		} catch (error) {
+			console.log(error);
+			return JSON.stringify(error);
+		}
 	  });
 
 	  console.log("QUERY:")
@@ -401,14 +403,14 @@ const formatChatSearchResults = async (result: any) => {
 
 		new DynamicStructuredTool({
 			name: "telegram-get-unread-messages",
-			description: "Gets a list of all unread messages and recent updates. The output is formatted title (title of the chat room the message is in), chat_id which is the 9 digit ID of the chat, and number_unread which is how many unread messages there are, finally top_messaage is the most recent unread message content in that chat room",
+			description: "Gets a list of all unread messages and recent updates. Only unread messages are shown. Only use this if specifically unread messages are needed. The output is formatted title (title of the chat room the message is in), chat_id which is the 9 digit ID of the chat, and number_unread which is how many unread messages there are, finally top_messaage is the most recent unread message content in that chat room",
 			schema: z.object({}),
 			func: getUnreadMessages
 		}),
 
 		new DynamicStructuredTool({
 			name: "telegram-get-chatroom-and-search",
-			description: "Firstly search for a chatroom using chatroom_query then in that chatroom search for a message using message_query",
+			description: "Firstly search for a chatroom and it's messages using chatroom_query then in that chatroom search for a message using message_query",
 			schema: z.object({
 				chatroom_query: z.string().describe("The search query for finding the chatroom to look in"),
 				message_query: z.string().describe("The search query for what to search for after the chatroom is firstly found"),
