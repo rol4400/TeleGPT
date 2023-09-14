@@ -16,12 +16,17 @@ const { PlanAndExecuteAgentExecutor } = require ("langchain/experimental/plan_an
 const {Api, TelegramClient} = require('telegram');
 const {StringSession} = require('telegram/sessions');
 
+// DOM Parsing
+const { JSDOM } = require("jsdom");
+const axios = require("axios");
+
+// Telegram API configuration
 const apiId = parseInt(process.env.TELE_API_ID!);
 const apiHash = process.env.TELE_API_HASH;
 const session = new StringSession(process.env.TELE_STR_SESSION);
 const client = new TelegramClient(session, apiId, apiHash, {});
 
-var dateLimit = 1694662783; //Math.floor(Date.now()/1000);
+var dateLimit = Math.floor(Date.now()/1000);
 
 // DEV Input
 const input = require("input"); // npm i input
@@ -76,6 +81,34 @@ const searchTelegramByChat = async ({ query, chat_id }:any) => {
 		}
 		return JSON.stringify(error);
 	  }
+}
+
+const getVerseContents = async ({verse, version}:any) => {
+	
+    const url = `https://www.biblegateway.com/passage?search=${verse}&version=${version}`;
+    const result = await axios.get(url);
+    const document = new JSDOM(result.data).window.document;
+	version = version || "NIV"; // Default the version to NIV
+
+    console.log(document);
+    const verse_name = document.querySelector(".dropdown-display-text")?.textContent;
+    let elements = [].slice.call(document.querySelectorAll(".std-text"));
+
+    console.log(document.querySelectorAll(".std-text")[0]);
+    let content = [];
+    for (let i = 0; i < elements.length; i++) {
+        let text = elements[i].textContent;
+        if (text.substr(0, 4) != "Back")
+            content.push(text);
+    }
+    if (content.length === 0) {
+        return "No results for the given verse"
+    }
+
+	return JSON.stringify({
+		verse: verse_name,
+		contents: content
+	});
 }
 
 const getChatHistory = async ({chat_id}:any) => {
@@ -191,7 +224,7 @@ const getUnreadMessages = async ({ }:any) => {
 
 		// Update the dateLimit so next time this function is run it will give new unread messages
 		// TODO: Make this value persistent
-		//dateLimit = Math.floor(Date.now()/1000);
+		dateLimit = Math.floor(Date.now()/1000);
 
 		return JSON.stringify(mapped);
 	  } catch (error) {
@@ -347,6 +380,16 @@ const formatChatSearchResults = async (result: any) => {
 				chat_id: z.number().describe("The ID of the chatroom. It MUST be a negative number with 9 digits")
 			}),
 			func: getChatHistory
+		}),
+
+		new DynamicStructuredTool({
+			name: "get-bible-verse",
+			description: "Searches a bible verse and returns the contents of the verse",
+			schema: z.object({
+				verse: z.string().describe("The bible verse in the correct format"),
+				version: z.string().default("NIV").describe("The version code of the bible to use, defult should be NIV")
+			}),
+			func: getVerseContents
 		}),
 
 		new DynamicStructuredTool({

@@ -37,6 +37,11 @@ bot.on('voice', (ctx:any) => {
 })
 
 bot.on('text', async (ctx:any) => {
+
+    var search = "Jn 8:44";
+    var version = "NIV";
+
+
     var answer = await agent.runQuery(ctx.message.text);
     return ctx.reply(answer.output)
 })
