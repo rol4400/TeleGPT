@@ -8,6 +8,7 @@ const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
 const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require("langchain/tools");
+import { SerpAPI, ChainTool } from "langchain/tools";
 
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
@@ -471,6 +472,12 @@ const formatChatSearchResults = async (result: any) => {
 		temperature: 0.3
 	});
 
+	var serpApi = new SerpAPI(process.env.SERPAPI_API_KEY, {
+		location: "Brisbane, Queensland",
+	})
+	serpApi.verbose = (process.env.NODE_ENV === "production" ? false : true);
+	serpApi.description = "a search engine. useful for when you need to answer questions about current events. input should be a search query."
+
 	// Setup the custom tools
 	const tools = [
 		new Calculator(),
@@ -563,7 +570,11 @@ const formatChatSearchResults = async (result: any) => {
 				prompt: z.string().default("This is a messge from yourself. Your memory has just been reset").describe("If resetting memory will make you forget what you need to do, put the prompt here"),
 			}),
 			func: resetMemory 
-		})
+		}),
+
+		// For google searches
+		serpApi
+		
 	];
 
 	// Setup the OpenAI Model
