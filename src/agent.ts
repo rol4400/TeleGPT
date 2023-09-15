@@ -31,6 +31,19 @@ var dateLimit = Math.floor(Date.now() / 1000);
 // DEV Input
 const input = require("input"); // npm i input
 
+var memory = new BufferMemory({
+	memoryKey: "chat_history",
+	returnMessages: true,
+});
+
+var executor: { call: (query: { input: string; }) => any; };
+
+const resetMemory = async ({prompt}:any) => {
+	console.log("*** Reseting Memory ***");
+	memory.clear();
+	run(prompt);
+}
+
 const searchForTelegramChatroom = async ({ query }: any) => {
 	var result = await client.invoke(
 		new Api.contacts.Search({
@@ -112,7 +125,7 @@ const getVerseContents = async ({ verse, version }: any) => {
 	});
 }
 
-const searchDropbox = async ({ query }:any) => {
+const searchDropbox = async ({ query, type }:any) => {
 
 	// Firstly run a search query
 	var config = {
@@ -131,14 +144,17 @@ const searchDropbox = async ({ query }:any) => {
 				},
 				"file_status": {
 					".tag": "active"
-				}
+				},
+				"file_categories":[{
+					".tag": type
+				}]
 			}
 		})
 	};
 
 	const response = await axios.request(config)
 	
-	if (response.data.has_more == false) {
+	if (response.data.matches.length < 1) {
 		console.log("No serach results found");
 		return "No files found for the search request";
 	}
@@ -204,9 +220,7 @@ const getChatHistory = async ({ chat_id }: any) => {
 	try {
 		var result = await client.invoke(
 			new Api.messages.GetHistory({
-				peer: new Api.InputPeerChat({
-					chatId: Number(chat_id)
-				}),
+				peer: BigInt(chat_id),
 				offsetId: 0,
 				offsetDate: 0,
 				addOffset: 0,
@@ -217,10 +231,13 @@ const getChatHistory = async ({ chat_id }: any) => {
 			})
 		);
 
-		var formatted = result.messages.map(async (message: any) => {
+		console.log("HISTORY");
+		console.log(result);
+
+		const formatted = result.messages.map((message: any) => {
 
 			// Find the user who sent the message
-			var user = result.users.find((user: any) => result.messages[0].fromId.userId.value == user.id)
+			var user = result.users.find((user: any) => message.fromId.userId.value == user.id)
 
 			// Compute their username
 			const firstName = user?.firstName || 'N/A';
@@ -230,9 +247,9 @@ const getChatHistory = async ({ chat_id }: any) => {
 			const username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A'
 
 			return {
-				message_text: message.message,
-				message_date: message.date,
-				message_from: username
+				"message_text": message.message,
+				"message_date": message.date,
+				"message_from": username
 			}
 		});
 
@@ -240,7 +257,8 @@ const getChatHistory = async ({ chat_id }: any) => {
 	} catch (error: any) {
 		console.log(error);
 		if (error.code == 400) {
-			return "The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again"
+			console.log("Returning response")
+			return JSON.stringify("The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again");
 		}
 		return JSON.stringify(error);
 	}
@@ -454,7 +472,7 @@ const formatChatSearchResults = async (result: any) => {
 
 	//var prefix_messages= [new SystemMessage(prompt_prefix)]
 	const model = new ChatOpenAI({
-		temperature: 0.1
+		temperature: 0.3
 	});
 
 	// Setup the custom tools
@@ -472,20 +490,11 @@ const formatChatSearchResults = async (result: any) => {
 
 		new DynamicStructuredTool({
 			name: "telegram-get-chatroom-history",
-			description: "Returns a history of the most recent messages in a given chatroom specified by chat_id. Use this option ONLY if a 9 digit chat_id from telegram-chatroom-search is known. chat_id MUST be given as a negative 9 digit number.",
+			description: "Returns a history of the most recent messages in a given chatroom specified by chat_id. Use this option ONLY if a 9 digit chat_id from telegram-chatroom-search is known. chat_id MUST be given as a negative 9 digit number. The output is message_text (contents of message), message_date (timestamp of messge), message_from (who sent it)",
 			schema: z.object({
 				chat_id: z.number().describe("The ID of the chatroom. It MUST be a negative number with 9 digits")
 			}),
 			func: getChatHistory
-		}),
-
-		new DynamicStructuredTool({
-			name: "search-dropbox",
-			description: "Dropbox is used to store scripts, example videos, class recordings, icons, and many materials. Use this to search dropbox with a query. Only words you would find in a file name (do not say recording or document!!). The output is multiple responses in order of relevance",
-			schema: z.object({
-				query: z.string().describe("The search query, keep it brief and simple"),
-			}),
-			func: searchDropbox
 		}),
 
 		new DynamicStructuredTool({
@@ -514,7 +523,7 @@ const formatChatSearchResults = async (result: any) => {
 
 		new DynamicStructuredTool({
 			name: "telegram-get-chatroom-and-search",
-			description: "Firstly search for a chatroom and it's messages using chatroom_query then in that chatroom search for a message using message_query",
+			description: "Firstly searches for a chatroom and it's messages using chatroom_query then in that chatroom search for a message using message_query",
 			schema: z.object({
 				chatroom_query: z.string().describe("The search query for finding the chatroom to look in"),
 				message_query: z.string().describe("The search query for what to search for after the chatroom is firstly found"),
@@ -540,31 +549,54 @@ const formatChatSearchResults = async (result: any) => {
 			}),
 			func: searchForTelegramChatroom
 		}),
+
+		new DynamicStructuredTool({
+			name: "search-dropbox",
+			description: "Only use this if other options had no results. Dropbox is used ONLY to store scripts, class recordings, and icons. Use this to search dropbox with a query. Only words you would find in a file name (do not say recording or document!!). The output is multiple responses in order of relevance",
+			schema: z.object({
+				query: z.string().describe("The search query, keep it brief and simple"),
+				type: z.enum(["", "image", "video", "document", "pdf", "folder", "presentation"]).default("").describe("The type of resource to search for"),
+			}),
+			func: searchDropbox
+		}),
+
+		new DynamicStructuredTool({
+			name: "end-conversation",
+			description: "When it seems like the conversation has ended and a new topic will be discussed this should be run first to reset the history. If you want to continue answering the user's prompt after reset, send a prompt to the optional prompt option",
+			schema: z.object({
+				prompt: z.string().default("This is a messge from yourself. Your memory has just been reset").describe("If resetting memory will make you forget what you need to do, put the prompt here"),
+			}),
+			func: resetMemory 
+		})
 	];
 
 	// Setup the OpenAI Model
-	var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. My name is Ryan. If you can't find the answer using one tool you MUST use as many other tools as you can before deciding there is no answer. If needed try reqording search queries multiple times for better results. When you send a long response, please use dot points or emoji to make it easy to read. Format responses in telegram's MarkdownV2 format`;
+	var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. 
+	My name is Ryan. If you can't find the answer using one tool you MUST use as many other tools 
+	as you can before deciding there is no answer. If needed try reqording search queries multiple times 
+	for better results. When you send a long response, please use dot points or emoji to make it easy to read. 
+	Format responses in telegram's MarkdownV2 format.
+	Telegram chatrooms are used for storing all kinds of information and reports, along with chats
+	Dropbox is used for storing only scripts, presentations and class recordings, though these are often also found in telegram chatrooms`;
 
-	const executor = await initializeAgentExecutorWithOptions(tools, model, {
+	executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
 		verbose: true,
-		memory: new BufferMemory({
-			memoryKey: "chat_history",
-			returnMessages: true,
-		}),
+		memory: memory,
 		agentArgs: {
 			prefix: prompt_prefix,
 			inputVariables: ["input", "agent_scratchpad", "chat_history"],
 			memoryPrompts: [new MessagesPlaceholder("chat_history")],
 		},
+		handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
 	});
 
 	module.exports.runQuery = async function (query: string) {
-		return await run(executor, query);
+		return await run(query);
 	}
 })()
 
-async function run(executor: any, query: string) {
+async function run(query: string) {
 	const result = await executor.call({ input: query });
 	return result;
 };
