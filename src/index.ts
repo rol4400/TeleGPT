@@ -19,7 +19,7 @@ bot.on('voice', (ctx:any) => {
             const postHeaders = {
                 headers: {
                     'Content-Type': 'audio/ogg',
-                    'Authorization': 'Basic YXBpa2V5OkExU3Y5YllTZDRJTDBCN00ta2ZhNnpEQWJDYkJvYXFFdkhkV0lFSmZpT2ht',
+                    'Authorization': 'Basic ' + process.env.SPEECH_TO_TEXT_IAM_APIKEY,
                 },
             };
             
@@ -37,13 +37,10 @@ bot.on('voice', (ctx:any) => {
 })
 
 bot.on('text', async (ctx:any) => {
-
-    var search = "Jn 8:44";
-    var version = "NIV";
-
-
     var answer = await agent.runQuery(ctx.message.text);
     return ctx.reply(answer.output)
 })
 
 bot.launch()
+
+//const setCRONReminder = async ({crontab, reminder_text}:any) => {
