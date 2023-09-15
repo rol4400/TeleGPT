@@ -8,7 +8,7 @@ const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
 const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require("langchain/tools");
-import { SerpAPI, ChainTool } from "langchain/tools";
+const { SerpAPI } = require ("langchain/tools");
 
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
@@ -108,8 +108,9 @@ const getVerseContents = async ({ verse, version }: any) => {
 	if (process.env.NODE_ENV !== "production") console.log(document.querySelectorAll(".std-text")[0]);
 	let content = [];
 	for (let i = 0; i < elements.length; i++) {
-		let text = elements[i].textContent;
-		if (text.substr(0, 4) != "Back")
+		const element = elements[i] as HTMLElement;
+		let text = element.textContent;
+		if (text && text.slice(0, 4) != "Back")
 			content.push(text);
 	}
 	if (content.length === 0) {
