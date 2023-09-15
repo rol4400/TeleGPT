@@ -11,14 +11,17 @@ const session = new StringSession("");
 
 // Express routing
 const express = require("express");
+const path = require('path');
 const app = express();
-const port = process.env.PORT || 3000
+const port = process.env.PORT || 5000
 app.use(express.json())
 
+// Deta space data storage
 const { Deta } = require('deta');
 const detaInstance = Deta();  //instantiate with Data Key or env DETA_PROJECT_KEY
 const db = detaInstance.Base("Users");
 
+// Create a promise for use in prompting the user for 2FA phone codes
 let globalPhoneCodePromise:any
 function generatePromise() {
     let resolve
@@ -30,6 +33,13 @@ function generatePromise() {
     
     return { resolve, reject, promise }
 }
+
+
+// app.use(express.static(path.resolve(__dirname, '../www/public')));
+
+app.get('/testApi', function(req:any, res:any) {
+    res.send("Tested Well");
+})
 
 let client:any
 app.get("/request_code/:phoneNumber", function (req:any, res:any) {
@@ -61,6 +71,10 @@ app.post("/request_code/:phoneNumber", function (req:any, res:any) {
     db.put({ phone: req.params.phoneNumber, session: client.session.save()});
     
 })
+
+app.get('*', (req:any, res:any) => {
+    res.sendFile(path.resolve(__dirname, '../www/build', 'index.html'));
+  });
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
