@@ -1,5 +1,4 @@
 require('dotenv').config();
-// const { OpenAIApi } = require('openai');
 
 // Langchain Configuration
 const { z } = require("zod");
@@ -7,10 +6,8 @@ const { ChatOpenAI } = require("langchain/chat_models/openai");
 const { initializeAgentExecutorWithOptions } = require("langchain/agents");
 const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
-const { SystemMessage } = require("langchain/schema");
 const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require("langchain/tools");
-const { PlanAndExecuteAgentExecutor } = require("langchain/experimental/plan_and_execute");
 
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
@@ -52,7 +49,7 @@ const searchForTelegramChatroom = async ({ query }: any) => {
 		})
 	);
 
-	console.log(result);
+	if (process.env.NODE_ENV !== "production") console.log(result);
 
 	const query_result: any = result.chats.map((chat: any) => {
 		return {
@@ -67,9 +64,8 @@ const searchForTelegramChatroom = async ({ query }: any) => {
 const searchTelegramByChat = async ({ query, chat_id }: any) => {
 	const filter = new Api.InputMessagesFilterEmpty({});
 
-	console.log("DEBUG ******************************************************************")
-	console.log(query);
-	console.log(chat_id);
+	if (process.env.NODE_ENV !== "production") console.log(query);
+	if (process.env.NODE_ENV !== "production") console.log(chat_id);
 
 	try {
 		const result = await client.invoke(
@@ -89,7 +85,7 @@ const searchTelegramByChat = async ({ query, chat_id }: any) => {
 
 		return await formatChatSearchResults(result);
 	} catch (error: any) {
-		console.log(error);
+		if (process.env.NODE_ENV !== "production") console.log(error);
 		if (error.code == 400) {
 			return "The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again"
 		}
@@ -104,11 +100,11 @@ const getVerseContents = async ({ verse, version }: any) => {
 	const document = new JSDOM(result.data).window.document;
 	version = version || "NIV"; // Default the version to NIV
 
-	console.log(document);
+	if (process.env.NODE_ENV !== "production") console.log(document);
 	const verse_name = document.querySelector(".dropdown-display-text")?.textContent;
 	let elements = [].slice.call(document.querySelectorAll(".std-text"));
 
-	console.log(document.querySelectorAll(".std-text")[0]);
+	if (process.env.NODE_ENV !== "production") console.log(document.querySelectorAll(".std-text")[0]);
 	let content = [];
 	for (let i = 0; i < elements.length; i++) {
 		let text = elements[i].textContent;
@@ -119,7 +115,7 @@ const getVerseContents = async ({ verse, version }: any) => {
 		return "No results for the given verse"
 	}
 
-	return JSON.stringify({
+	return "Here is the verse. Please DO NOT explain it in any way, just reply with the verse as is: " + JSON.stringify({
 		verse: verse_name,
 		contents: content
 	});
@@ -155,8 +151,8 @@ const searchDropbox = async ({ query, type }:any) => {
 	const response = await axios.request(config)
 	
 	if (response.data.matches.length < 1) {
-		console.log("No serach results found");
-		return "No files found for the search request";
+		if (process.env.NODE_ENV !== "production") console.log("No serach results found");
+		return "No files found for the search request. Maybe try searching all chat rooms instead";
 	}
 	
 	// For each of the search results, run a request to get the share link				
@@ -211,8 +207,8 @@ const searchDropbox = async ({ query, type }:any) => {
 			"url": url,
 		};
 	}));
-	console.log(formattedResponse)
 	
+	if (process.env.NODE_ENV !== "production") console.log(formattedResponse)
 	return JSON.stringify(formattedResponse);
 }
 
@@ -231,8 +227,8 @@ const getChatHistory = async ({ chat_id }: any) => {
 			})
 		);
 
-		console.log("HISTORY");
-		console.log(result);
+		if (process.env.NODE_ENV !== "production") console.log("HISTORY");
+		if (process.env.NODE_ENV !== "production") console.log(result);
 
 		const formatted = result.messages.map((message: any) => {
 
@@ -255,9 +251,9 @@ const getChatHistory = async ({ chat_id }: any) => {
 
 		return JSON.stringify(formatted);
 	} catch (error: any) {
-		console.log(error);
+		if (process.env.NODE_ENV !== "production") console.log(error);
 		if (error.code == 400) {
-			console.log("Returning response")
+			if (process.env.NODE_ENV !== "production") console.log("Returning response")
 			return JSON.stringify("The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again");
 		}
 		return JSON.stringify(error);
@@ -284,8 +280,8 @@ const getUnreadMessages = async ({ }: any) => {
 			return (message.date > dateLimit && dialog.unreadCount > 0);
 		});
 
-		console.log("Filtered:");
-		console.log(filteredDialogs);
+		if (process.env.NODE_ENV !== "production") console.log("Filtered:");
+		if (process.env.NODE_ENV !== "production") console.log(filteredDialogs);
 
 		var mapped = filteredDialogs.map((dialog: any) => {
 			var chat;
@@ -330,8 +326,8 @@ const getUnreadMessages = async ({ }: any) => {
 			};
 		});
 
-		console.log("Mapped:");
-		console.log(mapped);
+		if (process.env.NODE_ENV !== "production") console.log("Mapped:");
+		if (process.env.NODE_ENV !== "production") console.log(mapped);
 
 		// Update the dateLimit so next time this function is run it will give new unread messages
 		// TODO: Make this value persistent
@@ -371,7 +367,7 @@ const getContactsList = async () => {
 
 const getChatroomAndMessage = async ({ chatroom_query, message_query }: any) => {
 
-	console.log(chatroom_query);
+	if (process.env.NODE_ENV !== "production") console.log(chatroom_query);
 	var chatroom = JSON.parse(await searchForTelegramChatroom({ "query": chatroom_query })).ChatID;
 	var message = await searchTelegramByChat({ "query": message_query, "chat_id": chatroom })
 
@@ -398,14 +394,14 @@ const searchTelegramGlobal = async ({ query }: any) => {
 
 		return await formatChatSearchResults(result);
 	} catch (error: any) {
-		console.log(error);
+		if (process.env.NODE_ENV !== "production") console.log(error);
 		return JSON.stringify(error);
 	}
 }
 
 const formatChatSearchResults = async (result: any) => {
 
-	console.log(result);
+	if (process.env.NODE_ENV !== "production") console.log(result);
 
 	const query_result = result.messages.map((message: any) => {
 		//result.users.find(user => user.id === message.fromId)?.username || 'N/A';
@@ -459,8 +455,8 @@ const formatChatSearchResults = async (result: any) => {
 		}
 	});
 
-	console.log("QUERY:")
-	console.log(query_result.reverse());
+	if (process.env.NODE_ENV !== "production") console.log("QUERY:")
+	if (process.env.NODE_ENV !== "production") console.log(query_result.reverse());
 
 	return JSON.stringify(query_result.reverse());
 }
@@ -552,7 +548,7 @@ const formatChatSearchResults = async (result: any) => {
 
 		new DynamicStructuredTool({
 			name: "search-dropbox",
-			description: "Only use this if other options had no results. Dropbox is used ONLY to store scripts, class recordings, and icons. Use this to search dropbox with a query. Only words you would find in a file name (do not say recording or document!!). The output is multiple responses in order of relevance",
+			description: "Only use this if other options had no results. Dropbox is used for sotring class recordings. Use this to search dropbox for a recording. Only words you would find in a file name. The output is multiple responses in order of relevance",
 			schema: z.object({
 				query: z.string().describe("The search query, keep it brief and simple"),
 				type: z.enum(["", "image", "video", "document", "pdf", "folder", "presentation"]).default("").describe("The type of resource to search for"),
@@ -581,7 +577,7 @@ const formatChatSearchResults = async (result: any) => {
 
 	executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
-		verbose: true,
+		verbose: process.env.NODE_ENV === "production" ? false : true,
 		memory: memory,
 		agentArgs: {
 			prefix: prompt_prefix,

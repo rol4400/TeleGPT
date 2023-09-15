@@ -31,7 +31,7 @@ bot.on('voice', (ctx:any) => {
                   return ctx.replyWithHTML(marked.parseInline(answer.output));
               })
               .catch(function(error:any){
-                  console.log(error)
+                if (process.env.NODE_ENV !== "production") console.log(error)
               });
           
           });
@@ -47,4 +47,7 @@ bot.on('text', async (ctx:any) => {
 
 bot.launch()
 
-//const setCRONReminder = async ({crontab, reminder_text}:any) => {
+// TODO: Add reminder capability with crontab API
+const setCRONReminder = async ({crontab, reminder_text}:any) => {
+
+}

@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "build": "tsc --declaration --outDir dist/",
-    "start": "tsx --experimental-wasm-modules -r dotenv/config src/index.ts"
+    "start": "tsx --experimental-wasm-modules -r dotenv/config src/index.ts",
+    "start-prod": "build && node dist/index.js"
   },
   "author": "",
   "license": "ISC",
