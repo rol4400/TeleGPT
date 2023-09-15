@@ -115,7 +115,7 @@ const getVerseContents = async ({ verse, version }: any) => {
 const searchDropbox = async ({ query }:any) => {
 
 	// Firstly run a search query
-	let config = {
+	var config = {
 		method: 'post',
 		url: 'https://api.dropboxapi.com/2/files/search_v2',
 		headers: {
@@ -136,76 +136,68 @@ const searchDropbox = async ({ query }:any) => {
 		})
 	};
 
-	await axios.request(config)
-		.then(async (response: any) => {
+	const response = await axios.request(config)
+	
+	if (response.data.has_more == false) {
+		console.log("No serach results found");
+		return "No files found for the search request";
+	}
+	
+	// For each of the search results, run a request to get the share link				
+	const formattedResponse = await  Promise.all(response.data.matches.map(async (match: any): Promise<object> => {
+		let file_name = "None found";
+		let type = "None found";
+		let last_modified = "None found";
+		let url = "None found";
 
-			// For each of the search results, run a request to get the share link				
-			let file_name = "None found";
-			let file_path = "None found";
-			let last_modified = "None found";
-			let url = "None found";
+		const fileMetadata = match.metadata.metadata;
 
-			if (response.data.has_more == false) {
-				console.log("No serach results found");
-				return "No files found for the search request";
-			}
+		let config2 = {
+			method: 'post',
+			url: 'https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + process.env.DROPBOX_API
+			},
+			validateStatus: function() {return true;}, // Stop Axios errors, we'll handle them ourselves
+			data: JSON.stringify({ "path": fileMetadata.path_display })
+		};
 
-			await response.data.matches.map(async (match: any) => {
-				const fileMetadata = match.metadata.metadata;
+		var shareUrl = "No share link could be found";
 
-				let config = {
-					method: 'post',
-					url: 'https://api.dropboxapi.com/2/sharing/create_shared_link_with_settings',
-					headers: {
-						'Content-Type': 'application/json',
-						'Authorization': 'Bearer ' + process.env.DROPBOX_API
-					},
-					data: JSON.stringify({ "path": fileMetadata.path_display })
-				};
+		const response = await axios.request(config2);
+		var data = response.data;
 
-				let shareUrl = "No share link could be found";
-				try {
-					const response = await axios.request(config);
-					let data = response.data;
+		// Format the response to just extract the share url
+		if (data && data.url) {
+			shareUrl = data.url;
+		} else if (
+			// If the share link already exists, the response format is a bit different
+			data &&
+			data.error &&
+			data.error.shared_link_already_exists &&
+			data.error.shared_link_already_exists.metadata &&
+			data.error.shared_link_already_exists.metadata.url
+		) {
+			shareUrl = data.error.shared_link_already_exists.metadata.url;
+		}
 
-					// Format the response to just extract the share url
-					if (data && data.url) {
-						shareUrl = data.url;
-					} else if (
-						data &&
-						data.error &&
-						data.error.shared_link_already_exists &&
-						data.error.shared_link_already_exists.metadata &&
-						data.error.shared_link_already_exists.metadata.url
-						// If the share link already exists, the response format is a bit different
-					) {
-						shareUrl = data.error.shared_link_already_exists.metadata.url;
-					}
+		// Set the return variables
+		file_name = fileMetadata.name;
+		type = fileMetadata['.tag'];
+		last_modified = fileMetadata.client_modified;
+		url = shareUrl;
 
-					// Set the return variables
-					file_name = fileMetadata.name,
-					file_path = fileMetadata.path_display,
-					last_modified = fileMetadata.client_modified,
-					url = shareUrl
-				}
-				catch (error) {
-					console.log(error);
-					return JSON.stringify(error); // For the LLM to deal with
-				}
-			});
-
-			return JSON.stringify({
-				file_name: file_name,
-				file_path: file_path,
-				last_modified: last_modified,
-				url: url,
-			});
-		})
-		.catch((error: any) => {
-			console.log(error);
-			return JSON.stringify(error); // For the LLM to deal with it
-		});
-
+		return {
+			"file_name": file_name,
+			"type": type,
+			"last_modified": last_modified,
+			"url": url,
+		};
+	}));
+	console.log(formattedResponse)
+	
+	return JSON.stringify(formattedResponse);
 }
 
 const getChatHistory = async ({ chat_id }: any) => {
@@ -489,7 +481,7 @@ const formatChatSearchResults = async (result: any) => {
 
 		new DynamicStructuredTool({
 			name: "search-dropbox",
-			description: "Dropbox is used to store scripts, example videos, class recordings, icons, and many materials that aren't in telegram chats. Use this to search dropbox with a query. The output is multiple responses in order of relevance. The properties are: file_name, file_path, last_modified, and url (shared url link to the file)",
+			description: "Dropbox is used to store scripts, example videos, class recordings, icons, and many materials. Use this to search dropbox with a query. Only words you would find in a file name (do not say recording or document!!). The output is multiple responses in order of relevance",
 			schema: z.object({
 				query: z.string().describe("The search query, keep it brief and simple"),
 			}),
@@ -551,7 +543,7 @@ const formatChatSearchResults = async (result: any) => {
 	];
 
 	// Setup the OpenAI Model
-	var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. My name is Ryan. If you can't find the answer using one tool you MUST use as many other tools as you can before deciding there is no answer`;
+	var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. My name is Ryan. If you can't find the answer using one tool you MUST use as many other tools as you can before deciding there is no answer. If needed try reqording search queries multiple times for better results. When you send a long response, please use dot points or emoji to make it easy to read. Format responses in telegram's MarkdownV2 format`;
 
 	const executor = await initializeAgentExecutorWithOptions(tools, model, {
 		agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
