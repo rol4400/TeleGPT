@@ -111,8 +111,13 @@ class Agent {
 				"ChatID": -Number(chat.id.value)
 			}
 		})
+
+		var string_result = JSON.stringify(query_result[0]);
+		if (query_result[0] === undefined) {
+			string_result = "No results were found for that search. Try run this tool again after rewording the query & fixing spelling";
+		}
 	
-		return JSON.stringify(query_result[0])
+		return JSON.stringify(string_result)
 	}
 	
 	searchTelegramByChat = async ({ query, chat_id }: any) => {
