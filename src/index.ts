@@ -16,15 +16,14 @@ const session = new StringSession(process.env.TELE_STR_SESSION);
 const client = new TelegramClient(session, apiId, apiHash, {});
 
 const bot = new Telegraf(process.env.BOT_TOKEN)
-var agent:any;
+let agent = new Agent(client);
+agent.init();
 
 (async function init() {
     // Connect to the Telegram API
     await client.connect();
-
-    agent = new Agent(client);
     agent.init();
-})()
+})();
 
 async function updateVoiceCaption(caption:string){
     const message_id = (await client.invoke(

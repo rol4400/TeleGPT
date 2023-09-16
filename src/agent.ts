@@ -18,8 +18,6 @@ const { StringSession } = require('telegram/sessions');
 const { JSDOM } = require("jsdom");
 const axios = require("axios");
 
-
-
 // DEV Input
 //const input = require("input"); // npm i input
 
@@ -43,27 +41,41 @@ const model = new ChatOpenAI({
 	temperature: 0.3
 });
 class Agent {
-	
-	tools: any[];
-	executor: { call: (query: { input: string; }) => any; };
 	memory: any;
-	dateLimit: number
-	client:any;
+	executor: any;
+	dateLimit: number;
+	client: any;
+	tools: any[];
 	
 	constructor(executor_client: any) {
+
 		this.memory = new BufferMemory({
 			memoryKey: "chat_history",
 			returnMessages: true,
 		});
 
-		this.client = executor_client;
-	}
-	
-	public async init() {
-
 		// Init all the tools
 		this.setupTools();
 	
+		// // Init the executor
+		// this.executor = initializeAgentExecutorWithOptions(this.tools, model, {
+		// 	agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
+		// 	verbose: process.env.NODE_ENV === "production" ? false : true,
+		// 	memory: this.memory,
+		// 	agentArgs: {
+		// 		prefix: prompt_prefix,
+		// 		inputVariables: ["input", "agent_scratchpad", "chat_history"],
+		// 		memoryPrompts: [new MessagesPlaceholder("chat_history")],
+		// 	},
+		// 	handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
+		// });
+	
+		this.dateLimit = Math.floor(Date.now() / 1000);
+
+		this.client = executor_client;
+	}
+
+	async init() {
 		// Init the executor
 		this.executor = await initializeAgentExecutorWithOptions(this.tools, model, {
 			agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
@@ -76,13 +88,9 @@ class Agent {
 			},
 			handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
 		});
-
-		this.dateLimit = Math.floor(Date.now() / 1000);
-	
-		return;
 	}
 	
-	public async run(query: string) {
+	async run(query: string) {
 		const result = await this.executor.call({ input: query });
 		return result;
 	};
