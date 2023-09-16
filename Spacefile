@@ -1,0 +1,19 @@
+# Spacefile Docs: https://go.deta.dev/docs/spacefile/v0
+v: 0
+micros:
+  - name: TeleGPT
+    src: .
+    engine: nodejs16
+    primary: true
+    commands:
+      - npm install -g n
+      - n lts
+      - n prune
+      - npm install sc
+      - npm install -g tsx
+      - npm run build
+    include:
+     - dist
+     - .env
+    run: npm run start-dev-server
+    dev: npm run start-dev-server
