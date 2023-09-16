@@ -37,19 +37,13 @@ const model = new ChatOpenAI({
 });
 class Agent {
     constructor(executor_client) {
-        Object.defineProperty(this, "tools", {
+        Object.defineProperty(this, "memory", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
         Object.defineProperty(this, "executor", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "memory", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -62,6 +56,12 @@ class Agent {
             value: void 0
         });
         Object.defineProperty(this, "client", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "tools", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -84,7 +84,11 @@ class Agent {
                         "ChatID": -Number(chat.id.value)
                     };
                 });
-                return JSON.stringify(query_result[0]);
+                var string_result = JSON.stringify(query_result[0]);
+                if (query_result[0] === undefined) {
+                    string_result = "No results were found for that search. Try run this tool again after rewording the query & fixing spelling";
+                }
+                return JSON.stringify(string_result);
             }
         });
         Object.defineProperty(this, "searchTelegramByChat", {
@@ -511,11 +515,24 @@ class Agent {
             memoryKey: "chat_history",
             returnMessages: true,
         });
+        // Init all the tools
+        this.setupTools();
+        // // Init the executor
+        // this.executor = initializeAgentExecutorWithOptions(this.tools, model, {
+        // 	agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
+        // 	verbose: process.env.NODE_ENV === "production" ? false : true,
+        // 	memory: this.memory,
+        // 	agentArgs: {
+        // 		prefix: prompt_prefix,
+        // 		inputVariables: ["input", "agent_scratchpad", "chat_history"],
+        // 		memoryPrompts: [new MessagesPlaceholder("chat_history")],
+        // 	},
+        // 	handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
+        // });
+        this.dateLimit = Math.floor(Date.now() / 1000);
         this.client = executor_client;
     }
     async init() {
-        // Init all the tools
-        this.setupTools();
         // Init the executor
         this.executor = await initializeAgentExecutorWithOptions(this.tools, model, {
             agentType: "openai-functions",
@@ -528,13 +545,8 @@ class Agent {
             },
             handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
         });
-        this.dateLimit = Math.floor(Date.now() / 1000);
-        return;
     }
     async run(query) {
-        if (this.executor === null) {
-            await this.init();
-        }
         const result = await this.executor.call({ input: query });
         return result;
     }
