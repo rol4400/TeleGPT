@@ -18,11 +18,7 @@ const { StringSession } = require('telegram/sessions');
 const { JSDOM } = require("jsdom");
 const axios = require("axios");
 
-// Telegram API configuration
-const apiId = parseInt(process.env.TELE_API_ID!);
-const apiHash = process.env.TELE_API_HASH;
-const session = new StringSession(process.env.TELE_STR_SESSION);
-const client = new TelegramClient(session, apiId, apiHash, {});
+
 
 // DEV Input
 //const input = require("input"); // npm i input
@@ -52,18 +48,18 @@ class Agent {
 	executor: { call: (query: { input: string; }) => any; };
 	memory: any;
 	dateLimit: number
+	client:any;
 	
-	constructor() {
+	constructor(executor_client: any) {
 		this.memory = new BufferMemory({
 			memoryKey: "chat_history",
 			returnMessages: true,
 		});
+
+		this.client = executor_client;
 	}
 	
 	public async init() {
-		
-		// Connect to the Telegram API
-		await client.connect();
 
 		// Init all the tools
 		this.setupTools();
@@ -92,7 +88,7 @@ class Agent {
 	};
 
 	searchForTelegramChatroom = async ({ query }: any) => {
-		var result = await client.invoke(
+		var result = await this.client.invoke(
 			new Api.contacts.Search({
 				q: query,
 				limit: 5,
@@ -118,7 +114,7 @@ class Agent {
 		if (process.env.NODE_ENV !== "production") console.log(chat_id);
 	
 		try {
-			const result = await client.invoke(
+			const result = await this.client.invoke(
 				new Api.messages.Search({
 					q: query,
 					peer: BigInt(chat_id),
@@ -174,15 +170,23 @@ class Agent {
 	
 	searchDropbox = async ({ query, type }:any) => {
 	
-		// Firstly run a search query
-		var config = {
-			method: 'post',
-			url: 'https://api.dropboxapi.com/2/files/search_v2',
-			headers: {
-				'Content-Type': 'application/json',
-				'Authorization': 'Bearer ' + process.env.DROPBOX_API
-			},
-			data: JSON.stringify({
+		// Account for blank type tags (there's probably a nicer way to do this but ehh)
+		var data;
+		if (type == "") {
+			data = JSON.stringify({
+				"query": query,
+				"options": {
+					"max_results": 10,
+					"order_by": {
+						".tag": "relevance"
+					},
+					"file_status": {
+						".tag": "active"
+					}					
+				}
+			})
+		} else {
+			JSON.stringify({
 				"query": query,
 				"options": {
 					"max_results": 10,
@@ -194,9 +198,20 @@ class Agent {
 					},
 					"file_categories":[{
 						".tag": type
-					}]
+					}]	
 				}
 			})
+		}
+
+		// Run a search query
+		var config = {
+			method: 'post',
+			url: 'https://api.dropboxapi.com/2/files/search_v2',
+			headers: {
+				'Content-Type': 'application/json',
+				'Authorization': 'Bearer ' + process.env.DROPBOX_API
+			},
+			data: data
 		};
 	
 		const response = await axios.request(config)
@@ -265,7 +280,7 @@ class Agent {
 	
 	getChatHistory = async ({ chat_id }: any) => {
 		try {
-			var result = await client.invoke(
+			var result = await this.client.invoke(
 				new Api.messages.GetHistory({
 					peer: BigInt(chat_id),
 					offsetId: 0,
@@ -313,7 +328,7 @@ class Agent {
 	
 	getUnreadMessages = async ({ }: any) => {
 		try {
-			var result = await client.invoke(
+			var result = await this.client.invoke(
 				new Api.messages.GetDialogs({
 					offsetDate: 0,
 					offsetId: 0,
@@ -391,7 +406,7 @@ class Agent {
 	}
 	
 	getContactsList = async () => {
-		var result = await client.invoke(
+		var result = await this.client.invoke(
 			new Api.contacts.GetContacts({})
 		);
 	
@@ -429,7 +444,7 @@ class Agent {
 		const filter = new Api.InputMessagesFilterEmpty({});
 	
 		try {
-			const result = await client.invoke(
+			const result = await this.client.invoke(
 				new Api.messages.SearchGlobal({
 					q: query,
 					filter: filter,

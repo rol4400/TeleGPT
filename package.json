@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "build-all": "npm run build --prefix www && npm run build",
-    "build": "sc --declaration --outDir dist/",
+    "build": "npm install && sc --declaration --outDir dist/",
     "start-dev-server": "tsx --experimental-wasm-modules -r dotenv/config src/index.ts",
     "start-prod-server": "node dist/index.js",
     "start-dev-client": "npm start --prefix www",

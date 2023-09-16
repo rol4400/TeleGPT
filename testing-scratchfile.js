@@ -317,3 +317,21 @@ result = await client.invoke(
         message_from: username
     }
   })
+
+  result = await client.invoke(
+    new Api.messages.EditMessage({
+      peer: new Api.InputPeerChat({
+        chat_id: "6647669469"
+      }),
+      id: 350,
+      message: "Hello there!",
+    }))
+
+
+    result = await client.invoke(
+      new Api.messages.GetMessageEditData({
+        peer: new Api.InputPeerChat({
+          chat_id: "6647669469"
+        }),
+        id: 350,
+      }))
