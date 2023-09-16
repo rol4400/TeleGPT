@@ -37,7 +37,7 @@ function generatePromise() {
 
 // app.use(express.static(path.resolve(__dirname, '../www/public')));
 
-app.get('/testApi', function(req:any, res:any) {
+app.get('/testApi', function(_req:any, res:any) {
     res.send("Tested Well");
 })
 
@@ -64,7 +64,7 @@ app.get("/request_code/:phoneNumber", function (req:any, res:any) {
     res.sendStatus(200);
 })
 
-app.post("/request_code/:phoneNumber", function (req:any, res:any) {
+app.post("/request_code/:phoneNumber", function (req:any, _res:any) {
 
     globalPhoneCodePromise.resolve(req.body.phoneCode);
 
@@ -72,7 +72,7 @@ app.post("/request_code/:phoneNumber", function (req:any, res:any) {
     
 })
 
-app.get('*', (req:any, res:any) => {
+app.get('*', (_req:any, res:any) => {
     res.sendFile(path.resolve(__dirname, '../www/build', 'index.html'));
   });
 

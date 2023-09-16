@@ -4,12 +4,47 @@ require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const marked = require('marked');
 const axios = require("axios");
-const agent = require("./agent.js");
+const Agent = require("./agent");
+// Telegram MTPROTO API Configuration
+const { Api, TelegramClient } = require('telegram');
+const { StringSession } = require('telegram/sessions');
+// Telegram API configuration
+const apiId = parseInt(process.env.TELE_API_ID);
+const apiHash = process.env.TELE_API_HASH;
+const session = new StringSession(process.env.TELE_STR_SESSION);
+const client = new TelegramClient(session, apiId, apiHash, {});
 const bot = new Telegraf(process.env.BOT_TOKEN);
+let agent = new Agent(client);
+(async function init() {
+    // Connect to the Telegram API
+    await client.connect();
+    agent.init();
+})();
+async function updateVoiceCaption(caption) {
+    const message_id = (await client.invoke(
+    // Get the message ID
+    new Api.messages.GetHistory({
+        peer: "tele_gpt_rol4400_bot",
+        offsetId: 0,
+        offsetDate: 0,
+        addOffset: 0,
+        limit: 1,
+        maxId: 0,
+        minId: 0,
+        hash: BigInt("-4156887774564"),
+    }))).messages[0].id;
+    // Update the caption
+    await client.invoke(new Api.messages.EditMessage({
+        peer: "tele_gpt_rol4400_bot",
+        id: message_id,
+        message: caption,
+    }));
+}
 bot.on('voice', (ctx) => {
     ctx.sendChatAction('typing');
     ctx.telegram.getFileLink(ctx.message.voice.file_id).then((link) => {
         //link = https://api.telegram.org/file/bot<token>/<file_id>
+        // Download the voice file
         axios({
             url: link,
             method: "GET",
@@ -21,9 +56,14 @@ bot.on('voice', (ctx) => {
                     'Authorization': 'Basic ' + process.env.SPEECH_TO_TEXT_IAM_APIKEY,
                 },
             };
+            // Use IBM to transcribe the speech to text
             axios.post(process.env.SPEECH_TO_TEXT_URL + "/v1/recognize", get_response.data, postHeaders)
                 .then(async (post_response) => {
-                var answer = await agent.runQuery(post_response.data.results[0].alternatives[0].transcript);
+                var text = post_response.data.results[0].alternatives[0].transcript;
+                // Update the voice message's caption to match the speech to text result
+                updateVoiceCaption(text);
+                // Ask the agent and wait for the response
+                var answer = await agent.run(text);
                 return ctx.replyWithHTML(marked.parseInline(answer.output));
             })
                 .catch(function (error) {
@@ -35,7 +75,7 @@ bot.on('voice', (ctx) => {
 });
 bot.on('text', async (ctx) => {
     await ctx.persistentChatAction("typing", async () => {
-        var answer = await agent.runQuery(ctx.message.text);
+        var answer = await agent.run(ctx.message.text);
         return ctx.replyWithHTML(marked.parseInline(answer.output));
     });
 });
