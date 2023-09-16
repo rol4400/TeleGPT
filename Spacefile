@@ -2,13 +2,18 @@
 v: 0
 micros:
   - name: TeleGPT
-    src: ./
+    src: .
     engine: nodejs16
     primary: true
     commands:
       - npm install -g n
       - n lts
       - n prune
+      - npm install sc
+      - npm install -g tsx
       - npm run build
-    run: npm run start-prod-server
+    include:
+     - dist
+     - .env
+    run: npm run start-dev-server
     dev: npm run start-dev-server

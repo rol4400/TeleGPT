@@ -323,15 +323,50 @@ result = await client.invoke(
       peer: new Api.InputPeerChat({
         chat_id: "6647669469"
       }),
-      id: 350,
+      id: message_id,
       message: "Hello there!",
     }))
 
+   
+
+
+    
+  
 
     result = await client.invoke(
       new Api.messages.GetMessageEditData({
         peer: new Api.InputPeerChat({
           chat_id: "6647669469"
         }),
-        id: 350,
+        id: message_id,
       }))
+
+      
+
+
+
+      result = (await client.invoke(
+				new Api.messages.GetHistory({
+					peer: "tele_gpt_rol4400_bot",
+					offsetId: 0,
+					offsetDate: 0,
+					addOffset: 0,
+					limit: 1,
+					maxId: 0,
+					minId: 0,
+					hash: BigInt("-4156887774564"),
+				})
+			)).messages[0].id;
+
+
+
+      frontend:
+      container_name: telegpt-web
+      build:
+          context: ./www
+          dockerfile: Dockerfile-client
+      image: telegpt/telegpt-web
+      ports:
+          - "3000:3000"
+      volumes:
+          - ./www:/usr/src/app
