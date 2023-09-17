@@ -9,15 +9,12 @@ WORKDIR /usr/src/app
 # where available (npm@5+)
 
 COPY package*.json ./
-COPY .env ./
 
 RUN npm run build
 
-# If you are building your code for production
-# RUN npm ci --omit=dev
 # Bundle app source
 
-COPY . .
+COPY ./src .
 EXPOSE 5000
 EXPOSE 80
 EXPOSE 443
