@@ -83,8 +83,10 @@ bot.on('voice', async (ctx:any) => {
                     updateVoiceCaption(text);
             
                     // Ask the agent and wait for the response
-                    var answer = await agent.run(text);
-                    return ctx.replyWithHTML(marked.parseInline(answer.output));
+                    await ctx.persistentChatAction("typing", async () => {
+                        var answer = await agent.run(text);
+                        return ctx.replyWithHTML(marked.parseInline(answer.output));
+                    })
                 })
                 .catch(function(error:any){
                     if (process.env.NODE_ENV !== "production") console.log(error)
