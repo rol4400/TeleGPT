@@ -1,15 +1,17 @@
-const { PromptTemplate } = require ('langchain/prompts');
-const { LLMChain } = require ('langchain/chains');
-const { google } = require ('googleapis');
-const { VIEW_EVENTS_PROMPT } = import ('../prompts/view-event-prompt.js');
-const { getTimezoneOffsetInHours } = import ('../utils/index.js');
+import { PromptTemplate } from 'langchain/prompts'
+import { LLMChain } from 'langchain/chains'
+import { google } from 'googleapis'
+import { VIEW_EVENTS_PROMPT } from '../prompts/index.js'
+import { getTimezoneOffsetInHours } from '../utils/index.js'
+import type { JWT } from 'googleapis-common'
+import type { OpenAI } from 'langchain/llms/openai'
 
 const calendar = google.calendar('v3')
 
 type RunViewEventParams = {
   calendarId: string
-  auth: any
-  model: any
+  auth: JWT
+  model: OpenAI
 }
 
 const runViewEvents = async (
@@ -47,7 +49,7 @@ const runViewEvents = async (
     const curatedItems =
       response.data && response.data.items
         ? response.data.items.map(
-            ({ status, summary, description, start, end }:any) => ({
+            ({ status, summary, description, start, end }) => ({
               status,
               summary,
               description,
@@ -68,4 +70,4 @@ const runViewEvents = async (
   }
 }
 
-// export { runViewEvents }
+export { runViewEvents }

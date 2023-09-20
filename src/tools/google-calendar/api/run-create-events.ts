@@ -1,8 +1,10 @@
-const { PromptTemplate } = require('langchain/prompts');
-const { CREATE_EVENT_PROMPT } = import('../prompts/create-event-prompt.js');
-const { LLMChain } = require('langchain/chains');
-const { getTimezoneOffsetInHours } = import('../utils/index.js');
-const { google, calendar_v3 } = require('googleapis');
+import { PromptTemplate } from 'langchain/prompts'
+import { CREATE_EVENT_PROMPT } from '../prompts/index.js'
+import { LLMChain } from 'langchain/chains'
+import { getTimezoneOffsetInHours } from '../utils/index.js'
+import { google, calendar_v3 } from 'googleapis'
+import type { JWT, GaxiosResponse } from 'googleapis-common'
+import type { OpenAI } from 'langchain/llms/openai'
 
 const calendar = google.calendar('v3')
 
@@ -25,7 +27,7 @@ const createEvent = async (
     eventDescription = ''
   }: CreateEventParams,
   calendarId: string,
-  auth: any
+  auth: JWT
 ) => {
   const event = {
     summary: eventSummary,
@@ -58,8 +60,8 @@ const createEvent = async (
 
 type RunCreateEventParams = {
   calendarId: string
-  auth: any
-  model: any
+  auth: JWT
+  model: OpenAI
 }
 
 const runCreateEvent = async (
@@ -111,7 +113,7 @@ const runCreateEvent = async (
 
   if (!(event as { error: string }).error) {
     return `Event created successfully, details: event ${
-      (event).data.htmlLink
+      (event as GaxiosResponse<calendar_v3.Schema$Event>).data.htmlLink
     }`
   }
 
@@ -120,4 +122,4 @@ const runCreateEvent = async (
   }`
 }
 
-// export { runCreateEvent }
+export { runCreateEvent }
