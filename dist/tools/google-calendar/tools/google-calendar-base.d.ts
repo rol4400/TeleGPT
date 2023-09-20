@@ -1,5 +1,4 @@
-import { Tool } from 'langchain/tools';
-import { OpenAI } from 'langchain/llms/openai';
+declare const Tool: any;
 export interface GoogleCalendarAgentParams {
     credentials: {
         clientEmail?: string;
@@ -16,7 +15,8 @@ export declare class GoogleCalendarBase extends Tool {
     protected calendarId: string;
     protected scopes: string[];
     constructor(fields?: GoogleCalendarAgentParams);
-    getModel(): OpenAI;
+    getModel(): any;
     getAuth(): Promise<import("googleapis-common").JWT>;
     _call(input: string): Promise<string>;
 }
+export {};

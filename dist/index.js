@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const marked = require('marked');
@@ -88,7 +90,6 @@ bot.on('text', async (ctx) => {
     });
 });
 bot.launch();
-export {};
 // TODO: Add reminder capability with crontab API
 // const setCRONReminder = async ({crontab, reminder_text}:any) => {
 // }

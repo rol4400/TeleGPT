@@ -1,4 +1,7 @@
-export const VIEW_EVENTS_PROMPT = `
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.VIEW_EVENTS_PROMPT = void 0;
+exports.VIEW_EVENTS_PROMPT = `
 Date format: YYYY-MM-DDThh:mm:ss+00:00
 Based on this event description: 'View my events on Thursday',
 output a json of the following parameters: 

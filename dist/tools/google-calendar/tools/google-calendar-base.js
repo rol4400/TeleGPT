@@ -1,7 +1,10 @@
-import { google } from 'googleapis';
-import { Tool } from 'langchain/tools';
-import { OpenAI } from 'langchain/llms/openai';
-export class GoogleCalendarBase extends Tool {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GoogleCalendarBase = void 0;
+const googleapis_1 = require("googleapis");
+const { Tool } = require('langchain/tools');
+const { OpenAI } = require('langchain/llms/openai');
+class GoogleCalendarBase extends Tool {
     constructor(fields = {
         credentials: {
             clientEmail: process.env.CLIENT_EMAIL,
@@ -73,11 +76,12 @@ export class GoogleCalendarBase extends Tool {
         });
     }
     async getAuth() {
-        const auth = new google.auth.JWT(this.clientEmail, undefined, this.privateKey, this.scopes);
+        const auth = new googleapis_1.google.auth.JWT(this.clientEmail, undefined, this.privateKey, this.scopes);
         return auth;
     }
     async _call(input) {
         return input;
     }
 }
+exports.GoogleCalendarBase = GoogleCalendarBase;
 //# sourceMappingURL=google-calendar-base.js.map

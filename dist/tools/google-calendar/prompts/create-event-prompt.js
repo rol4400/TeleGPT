@@ -1,4 +1,7 @@
-export const CREATE_EVENT_PROMPT = `
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CREATE_EVENT_PROMPT = void 0;
+exports.CREATE_EVENT_PROMPT = `
 Extract the start and end times from the event description. A message may either have a start time, or a start and end time. 
 And may have a duration specified. If there's only a start time, guess how long the event should go for and set event_end_time accordingly.
 If the end time is specified or implied please use that end time. PAY CAREFUL attention to am and pm and get the times correct

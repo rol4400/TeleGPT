@@ -1,12 +1,15 @@
-import { PromptTemplate } from 'langchain/prompts';
-import { LLMChain } from 'langchain/chains';
-import { google } from 'googleapis';
-import { VIEW_EVENTS_PROMPT } from '../prompts/index.js';
-import { getTimezoneOffsetInHours } from '../utils/index.js';
-const calendar = google.calendar('v3');
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runViewEvents = void 0;
+const { PromptTemplate } = require('langchain/prompts');
+const { LLMChain } = require('langchain/chains');
+const googleapis_1 = require("googleapis");
+const index_js_1 = require("../prompts/index.js");
+const index_js_2 = require("../utils/index.js");
+const calendar = googleapis_1.google.calendar('v3');
 const runViewEvents = async (query, { model, auth, calendarId }) => {
     const prompt = new PromptTemplate({
-        template: VIEW_EVENTS_PROMPT,
+        template: index_js_1.VIEW_EVENTS_PROMPT,
         inputVariables: ['date', 'query', 'u_timezone', 'dayName']
     });
     const viewEventsChain = new LLMChain({
@@ -14,7 +17,7 @@ const runViewEvents = async (query, { model, auth, calendarId }) => {
         prompt
     });
     const date = new Date().toISOString();
-    const u_timezone = getTimezoneOffsetInHours();
+    const u_timezone = (0, index_js_2.getTimezoneOffsetInHours)();
     const dayName = new Date().toLocaleString('en-us', { weekday: 'long' });
     const output = await viewEventsChain.call({
         query,
@@ -47,5 +50,5 @@ const runViewEvents = async (query, { model, auth, calendarId }) => {
         return `An error occurred: ${error}`;
     }
 };
-export { runViewEvents };
+exports.runViewEvents = runViewEvents;
 //# sourceMappingURL=run-view-events.js.map

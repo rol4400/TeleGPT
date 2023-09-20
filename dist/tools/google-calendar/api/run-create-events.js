@@ -1,9 +1,12 @@
-import { PromptTemplate } from 'langchain/prompts';
-import { CREATE_EVENT_PROMPT } from '../prompts/index.js';
-import { LLMChain } from 'langchain/chains';
-import { getTimezoneOffsetInHours } from '../utils/index.js';
-import { google } from 'googleapis';
-const calendar = google.calendar('v3');
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.runCreateEvent = void 0;
+const { PromptTemplate } = require('langchain/prompts');
+const { LLMChain } = require('langchain/chains');
+const googleapis_1 = require("googleapis");
+const index_js_1 = require("../prompts/index.js");
+const index_js_2 = require("../utils/index.js");
+const calendar = googleapis_1.google.calendar('v3');
 const createEvent = async ({ eventSummary, eventStartTime, eventEndTime, userTimezone, eventLocation = '', eventDescription = '' }, calendarId, auth) => {
     const event = {
         summary: eventSummary,
@@ -34,7 +37,7 @@ const createEvent = async ({ eventSummary, eventStartTime, eventEndTime, userTim
 };
 const runCreateEvent = async (query, { calendarId, auth, model }) => {
     const prompt = new PromptTemplate({
-        template: CREATE_EVENT_PROMPT,
+        template: index_js_1.CREATE_EVENT_PROMPT,
         inputVariables: ['date', 'query', 'u_timezone', 'dayName']
     });
     const createEventChain = new LLMChain({
@@ -42,7 +45,7 @@ const runCreateEvent = async (query, { calendarId, auth, model }) => {
         prompt
     });
     const date = new Date().toISOString();
-    const u_timezone = getTimezoneOffsetInHours();
+    const u_timezone = (0, index_js_2.getTimezoneOffsetInHours)();
     const dayName = new Date().toLocaleString('en-us', { weekday: 'long' });
     const output = await createEventChain.call({
         query,
@@ -65,5 +68,5 @@ const runCreateEvent = async (query, { calendarId, auth, model }) => {
     }
     return `An error occurred creating the event: ${event.error}`;
 };
-export { runCreateEvent };
+exports.runCreateEvent = runCreateEvent;
 //# sourceMappingURL=run-create-events.js.map

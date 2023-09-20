@@ -1,17 +1,16 @@
-import { PromptTemplate } from 'langchain/prompts'
-import { LLMChain } from 'langchain/chains'
+const { PromptTemplate } = require ('langchain/prompts');
+const { LLMChain } = require ('langchain/chains');
 import { google } from 'googleapis'
 import { VIEW_EVENTS_PROMPT } from '../prompts/index.js'
 import { getTimezoneOffsetInHours } from '../utils/index.js'
 import type { JWT } from 'googleapis-common'
-import type { OpenAI } from 'langchain/llms/openai'
 
 const calendar = google.calendar('v3')
 
 type RunViewEventParams = {
   calendarId: string
   auth: JWT
-  model: OpenAI
+  model: any
 }
 
 const runViewEvents = async (

@@ -1,9 +1,6 @@
-import { ChatOpenAI } from 'langchain/chat_models/openai';
-import type { AzureOpenAIInput, OpenAIChatInput } from 'langchain/chat_models/openai';
-import { InitializeAgentExecutorOptions } from 'langchain/agents';
-import { GoogleCalendarCreateTool, GoogleCalendarViewTool } from './tools/index.js';
+declare const GoogleCalendarCreateTool: any, GoogleCalendarViewTool: any;
 import type { GoogleCalendarAgentParams } from './tools/google-calendar-base.js';
-type OpenAIOptions = Partial<OpenAIChatInput> & Partial<AzureOpenAIInput> & any & {
+type OpenAIOptions = any & {
     concurrency?: number;
     cache?: boolean;
     openAIApiKey?: string;
@@ -12,14 +9,14 @@ type OpenAIOptions = Partial<OpenAIChatInput> & Partial<AzureOpenAIInput> & any 
 export type CalendarAgentParams = {
     mode?: 'create' | 'view' | 'full';
     calendarOptions: GoogleCalendarAgentParams;
-    executorOptions?: InitializeAgentExecutorOptions;
+    executorOptions?: any;
     openApiOptions?: OpenAIOptions;
 };
 declare class GoogleCalendarAgent {
     protected tools: any[];
     protected agent: any;
-    protected openApiOptions: Partial<ChatOpenAI>;
-    protected executorOptions: InitializeAgentExecutorOptions;
+    protected openApiOptions: any;
+    protected executorOptions: any;
     constructor({ mode, calendarOptions, openApiOptions, executorOptions }: CalendarAgentParams);
     init(): Promise<this>;
     execute(input: string): Promise<any>;

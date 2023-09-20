@@ -1,1 +1,1 @@
-{"version":3,"file":"view-events-prompt.js","sourceRoot":"","sources":["../../../../src/tools/google-calendar/prompts/view-events-prompt.ts"],"names":[],"mappings":"AAAA,MAAM,CAAC,MAAM,kBAAkB,GAAG;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;CAiCjC,CAAA"}
+{"version":3,"file":"view-events-prompt.js","sourceRoot":"","sources":["../../../../src/tools/google-calendar/prompts/view-events-prompt.ts"],"names":[],"mappings":";;;AAAa,QAAA,kBAAkB,GAAG;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;CAiCjC,CAAA"}

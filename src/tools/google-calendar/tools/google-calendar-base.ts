@@ -1,6 +1,6 @@
 import { google } from 'googleapis'
-import { Tool } from 'langchain/tools'
-import { OpenAI } from 'langchain/llms/openai'
+const { Tool } = require ('langchain/tools')
+const { OpenAI } = require ('langchain/llms/openai')
 
 export interface GoogleCalendarAgentParams {
   credentials: {

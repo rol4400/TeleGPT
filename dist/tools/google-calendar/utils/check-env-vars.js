@@ -1,4 +1,7 @@
-import chalk from 'chalk';
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.checkEnvVars = void 0;
+const chalk = require('chalk');
 const checkEnvVars = () => {
     const requiredEnvVars = [
         'OPENAI_API_KEY',
@@ -12,5 +15,5 @@ const checkEnvVars = () => {
         process.exit(1);
     }
 };
-export { checkEnvVars };
+exports.checkEnvVars = checkEnvVars;
 //# sourceMappingURL=check-env-vars.js.map

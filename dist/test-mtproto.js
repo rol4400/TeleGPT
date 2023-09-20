@@ -1,3 +1,5 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
@@ -20,5 +22,4 @@ const client = new TelegramClient(session, apiId, apiHash, {});
     console.log("You should now be connected.");
     console.log(client.session.save());
 })();
-export {};
 //# sourceMappingURL=test-mtproto.js.map

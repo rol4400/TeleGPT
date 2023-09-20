@@ -1,7 +1,10 @@
-import { GoogleCalendarBase } from './google-calendar-base.js';
-import { VIEW_TOOL_DESCRIPTION } from './tool-descriptions.js';
-import { runViewEvents } from '../api/run-view-events.js';
-export class GoogleCalendarViewTool extends GoogleCalendarBase {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.GoogleCalendarViewTool = void 0;
+const google_calendar_base_js_1 = require("./google-calendar-base.js");
+const tool_descriptions_js_1 = require("./tool-descriptions.js");
+const run_view_events_js_1 = require("../api/run-view-events.js");
+class GoogleCalendarViewTool extends google_calendar_base_js_1.GoogleCalendarBase {
     constructor(fields) {
         super(fields);
         Object.defineProperty(this, "name", {
@@ -14,17 +17,18 @@ export class GoogleCalendarViewTool extends GoogleCalendarBase {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: VIEW_TOOL_DESCRIPTION
+            value: tool_descriptions_js_1.VIEW_TOOL_DESCRIPTION
         });
     }
     async _call(query) {
         const auth = await this.getAuth();
         const model = this.getModel();
-        return await runViewEvents(query, {
+        return await (0, run_view_events_js_1.runViewEvents)(query, {
             auth,
             model,
             calendarId: this.calendarId
         });
     }
 }
+exports.GoogleCalendarViewTool = GoogleCalendarViewTool;
 //# sourceMappingURL=google-calendar-view.js.map
