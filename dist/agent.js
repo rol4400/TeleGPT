@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 // Langchain Configuration
 const { z } = require("zod");
@@ -10,12 +8,19 @@ const { MessagesPlaceholder } = require("langchain/prompts");
 const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require("langchain/tools");
 const { SerpAPI } = require("langchain/tools");
+const { VectorStoreRetrieverMemory } = require("langchain/memory");
+const { LLMChain } = require("langchain/chains");
+const { PromptTemplate } = require("langchain/prompts");
+const { MemoryVectorStore } = require("langchain/vectorstores/memory");
+const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
 // DOM Parsing
 const { JSDOM } = require("jsdom");
 const axios = require("axios");
+// Tools
+const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require('./tools/google-calendar/index.ts');
 // DEV Input
 //const input = require("input"); // npm i input
 var serpApi = new SerpAPI(process.env.SERPAPI_API_KEY, {
@@ -35,6 +40,18 @@ Dropbox is used for storing only scripts, presentations and class recordings, th
 const model = new ChatOpenAI({
     temperature: 0.3
 });
+// Google Calendar Auth
+const googleCalendarParams = {
+    credentials: {
+        clientEmail: process.env.CLIENT_EMAIL,
+        privateKey: process.env.PRIVATE_KEY,
+        calendarId: process.env.CALENDAR_ID
+    },
+    scopes: [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/calendar.events'
+    ]
+};
 class Agent {
     constructor(executor_client) {
         Object.defineProperty(this, "memory", {
@@ -62,6 +79,12 @@ class Agent {
             value: void 0
         });
         Object.defineProperty(this, "tools", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "vectorStore", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -511,8 +534,10 @@ class Agent {
                 this.run(prompt);
             }
         });
+        this.vectorStore = new MemoryVectorStore(new OpenAIEmbeddings());
         this.memory = new BufferMemory({
             memoryKey: "chat_history",
+            vectorStoreRetriever: this.vectorStore.asRetriever(1),
             returnMessages: true,
         });
         // Init all the tools
@@ -555,6 +580,8 @@ class Agent {
     setupTools() {
         this.tools = [
             new Calculator(),
+            new GoogleCalendarCreateTool(googleCalendarParams),
+            new GoogleCalendarViewTool(googleCalendarParams),
             new DynamicStructuredTool({
                 name: "telegram-message-search-global",
                 description: "Searches through all telegram chats for the given query and returns the results in order of relevance",
@@ -641,4 +668,5 @@ class Agent {
     }
 }
 module.exports = Agent;
+export {};
 //# sourceMappingURL=agent.js.map

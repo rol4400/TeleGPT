@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
@@ -62,6 +60,7 @@ app.get('*', (_req, res) => {
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
+export {};
 /*
 app.post("/request_code2", function (req:any, res:any) {
   console.log("Loading interactive example...");

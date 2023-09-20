@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const marked = require('marked');
@@ -67,8 +65,10 @@ bot.on('voice', async (ctx) => {
                     // Update the voice message's caption to match the speech to text result
                     updateVoiceCaption(text);
                     // Ask the agent and wait for the response
-                    var answer = await agent.run(text);
-                    return ctx.replyWithHTML(marked.parseInline(answer.output));
+                    await ctx.persistentChatAction("typing", async () => {
+                        var answer = await agent.run(text);
+                        return ctx.replyWithHTML(marked.parseInline(answer.output));
+                    });
                 })
                     .catch(function (error) {
                     if (process.env.NODE_ENV !== "production")
@@ -88,6 +88,7 @@ bot.on('text', async (ctx) => {
     });
 });
 bot.launch();
+export {};
 // TODO: Add reminder capability with crontab API
 // const setCRONReminder = async ({crontab, reminder_text}:any) => {
 // }

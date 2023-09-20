@@ -6,6 +6,7 @@
   "files": [
     "dist/"
   ],
+  "type":"module",
   "scripts": {
     "build-all": "npm run build --prefix www && npm run build",
     "build": "npm install",
