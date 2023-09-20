@@ -10,6 +10,12 @@ const { BufferMemory } = require("langchain/memory");
 const { DynamicStructuredTool } = require("langchain/tools");
 const { SerpAPI } = require ("langchain/tools");
 
+const { VectorStoreRetrieverMemory } = require("langchain/memory");
+const { LLMChain } = require("langchain/chains");
+const { PromptTemplate } = require("langchain/prompts");
+const { MemoryVectorStore } = require("langchain/vectorstores/memory");
+const { OpenAIEmbeddings } = require("langchain/embeddings/openai");
+
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
@@ -62,11 +68,14 @@ class Agent {
 	dateLimit: number;
 	client: any;
 	tools: any[];
+	vectorStore: any;
 	
 	constructor(executor_client: any) {
 
+		this.vectorStore = new MemoryVectorStore(new OpenAIEmbeddings());
 		this.memory = new BufferMemory({
 			memoryKey: "chat_history",
+			vectorStoreRetriever: this.vectorStore.asRetriever(1),
 			returnMessages: true,
 		});
 
