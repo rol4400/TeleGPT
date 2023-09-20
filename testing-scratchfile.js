@@ -53,10 +53,27 @@ var result = await client.invoke(
 
         const apiId = 29908856;
         const apiHash = "9a71691416fa1739b9c38e66f3a7f391";
-        const session = new StringSession( "1BQANOTEuMTA4LjU2LjE2MAG7J05/zsddgHLO5YTWp62CHdi0fACL5UTTazDrhUoi5w6IcZuqaBiQm8+xZGe1w5znhjW4qkGU7BGjeLbTfsv8jElDgNmupP0DJJOoOeuyqgvpfQDaUHtuH5+Cp7bO3nbCjdQmbihYLl2IigjCX8T5VyCwXtITp2Sc132UWVibOwchF9IJmozFbQ/Vlai+KLY1LuNgqZnEhZSIWBie6auS9CNK5Bc0zPIcXfSpN+a6X57buHtpy956qlRpA/8D0sRQZDvhRPziB2qQ7xpURtGvXNQIpr7wVZ6uFXsimMfZF10FtwFWeDFxtF49zNpFSnGTs6sjs9VSD64TNga2TAsYDg==");
+        const session = new StringSession( "1BQANOTEuMTA4LjU2LjE1MwG7ecZ8s/7TVgU+j69w459WyEzcJduyIyx0LJKIsGD/e/EOFFhhcExfGI5EdaedeHRSLpKN6CjNT7vFmpXM/bUnKVEC7P+XdY3RUTXNKD+oZlh9z0yU4LG8fDJyH1AOC+PqW6UN3yi+n8UrTVjds9l4E/sg9QCT+SKvI8W0o1mJtHDQwvZ1wH+M9eY7wHuSNitflsfqEX9dMS+UtsjW4G7zF89I0t3F6qnEE3MT00Mxa/8AytjhRmNYEc1x7JReHvt5epSH0uwoBYz8JE69PN/j2h8iX8hXqfSTw9rtg8IHzPtq6GtmfwwnF2oJc4/R119uaGVKm4RaS5/KM8e+Gs9ooQ==");
         const client = new TelegramClient(session, apiId, apiHash, {});
         await client.connect()
 
+
+
+        result = await client.invoke(
+          new Api.phone.RequestCall({
+            userId: "lion_olsen",
+            randomId: 43,
+            gAHash: Buffer.from("arbitrary data here"),
+            protocol: new Api.PhoneCallProtocol({
+              minLayer: 43,
+              maxLayer: 43,
+              libraryVersions: ["some string here"],
+              udpP2p: true,
+              udpReflector: true,
+            }),
+            video: false,
+          })
+        
 
 
       Data = result.messages.map(message => {
@@ -358,6 +375,7 @@ result = await client.invoke(
 				})
 			)).messages[0].id;
 
+      sudo cp -v ./myapp/docker_boot.service /etc/systemd/system
 
 
       frontend:

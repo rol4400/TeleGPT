@@ -18,6 +18,10 @@ const { StringSession } = require('telegram/sessions');
 const { JSDOM } = require("jsdom");
 const axios = require("axios");
 
+// Tools
+const { GoogleCalendarCreateTool } = require ('./tools/google-calendar/google-calendar-create.ts');
+const { GoogleCalendarViewTool } = require ('./tools/google-calendar/google-calendar-view.ts');
+
 // DEV Input
 //const input = require("input"); // npm i input
 
@@ -40,6 +44,19 @@ Dropbox is used for storing only scripts, presentations and class recordings, th
 const model = new ChatOpenAI({
 	temperature: 0.3
 });
+
+// Google Calendar Auth
+const googleCalendarParams = {
+	credentials: {
+	  clientEmail: process.env.CLIENT_EMAIL,
+	  privateKey: process.env.PRIVATE_KEY,
+	  calendarId: process.env.CALENDAR_ID
+	},
+	scopes: [
+	  'https://www.googleapis.com/auth/calendar',
+	  'https://www.googleapis.com/auth/calendar.events'
+	]
+  }
 class Agent {
 	memory: any;
 	executor: any;
@@ -544,6 +561,9 @@ class Agent {
 	setupTools(){
 		this.tools = [
 			new Calculator(),
+
+			new GoogleCalendarCreateTool(googleCalendarParams),
+    		new GoogleCalendarViewTool(googleCalendarParams),
 		
 			new DynamicStructuredTool({
 				name: "telegram-message-search-global",
