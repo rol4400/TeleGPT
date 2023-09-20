@@ -1,5 +1,7 @@
 export const CREATE_TOOL_DESCRIPTION = `A tool for creating Google Calendar events and meetings.
 
+Only use this tool if the time for the meeting is exactly specified. If not, either use google_calendar_view to find a time first, or ask for a time
+
 INPUT example:
 "action": "google_calendar_create",
 "action_input": "create a new meeting with John Doe tomorrow at 4pm"
