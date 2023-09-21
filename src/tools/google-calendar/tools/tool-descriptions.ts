@@ -21,6 +21,15 @@ INPUT examples:
 "action": "google_calendar_view",
 "action_input": "display meetings for tomorrow between 4pm and 8pm"
 
+"action": "google_calendar_view",
+"action_input": "whats my schedule like"
+
+"action": "google_calendar_view",
+"action_input": "when am I free"
+
+"action": "google_calendar_view",
+"action_input": "suggest me a time to fit in an event"
+
 OUTPUT:
 - title, start time, end time, attendees, description (if available)
 `
