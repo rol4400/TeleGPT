@@ -25,7 +25,7 @@ const { JSDOM } = require("jsdom");
 const axios = require("axios");
 
 // Tools
-const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require ('./tools/google-calendar/index.ts');
+const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require ('./tools/google-calendar/index.js');
 
 // DEV Input
 //const input = require("input"); // npm i input

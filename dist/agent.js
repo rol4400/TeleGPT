@@ -22,7 +22,7 @@ const { StringSession } = require('telegram/sessions');
 const { JSDOM } = require("jsdom");
 const axios = require("axios");
 // Tools
-const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require('./tools/google-calendar/index.ts');
+const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require('./tools/google-calendar/index.js');
 // DEV Input
 //const input = require("input"); // npm i input
 var serpApi = new SerpAPI(process.env.SERPAPI_API_KEY, {

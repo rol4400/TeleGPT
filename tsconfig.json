@@ -25,6 +25,8 @@
     "tests/"
   ],
   "include": [
-    "./src"
+    "./src",
+    "./src/*",
+    "./src/tools/google-calendar"
   ]
 }
