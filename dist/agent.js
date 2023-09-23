@@ -23,6 +23,7 @@ const { JSDOM } = require("jsdom");
 const axios = require("axios");
 // Tools
 const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require('./tools/google-calendar/index.js');
+// const { MessageSenderTool } = require ('./tools/message-sender/index.js');
 const { splitText } = require("./text-spitter.js");
 // DEV Input
 //const input = require("input"); // npm i input
@@ -38,7 +39,14 @@ as you can before deciding there is no answer. If needed try reqording search qu
 for better results. When you send a long response, please use dot points or emoji to make it easy to read. 
 Format responses in telegram's MarkdownV2 format.
 Telegram chatrooms are used for storing all kinds of information and reports, along with chats
-Dropbox is used for storing only scripts, presentations and class recordings, though these are often also found in telegram chatrooms`;
+Dropbox is used for storing only scripts, presentations and class recordings, though these are often also found in telegram chatrooms
+
+If I ask you to send a message. Please make sure to confirm with me if the message and full name is correct every time before sending. 
+If I ask for help to reply to a message or draft a response. Please first get the message history of the user's chat with me.
+
+Also word the messages in such as way as if I am sending it not yourself. Don't address people unnecessarially but if you do then you can use "Anneyonghasimnikka" to greet them. 
+Keep messages simple and not over the top friendly. Don't use cute emoji
+`;
 //var prefix_messages= [new SystemMessage(prompt_prefix)]
 const model = new ChatOpenAI({
     temperature: 0.3
@@ -308,20 +316,31 @@ class Agent {
                     if (process.env.NODE_ENV !== "production")
                         console.log(result);
                     const formatted = result.messages.map((message) => {
-                        // Find the user who sent the message
-                        var user = result.users.find((user) => message.fromId.userId.value == user.id);
-                        // Compute their username
-                        const firstName = user?.firstName || 'N/A';
-                        const lastName = user?.lastName || '';
-                        // Create the username by combining firstName and lastName
-                        const username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
-                        return {
-                            "message_text": message.message,
-                            "message_date": message.date,
-                            "message_from": username
-                        };
+                        // TODO: Remove try catch here, and do it properly by checking the user ID
+                        try {
+                            // Find the user who sent the message
+                            var user = result.users.find((user) => message.fromId.userId.value == user.id);
+                            // Compute their username
+                            const firstName = user?.firstName || 'N/A';
+                            const lastName = user?.lastName || '';
+                            // Create the username by combining firstName and lastName
+                            const username = (firstName && lastName) ? `${firstName} ${lastName}` : firstName || lastName || 'N/A';
+                            return {
+                                "message_text": message.message,
+                                "message_date": message.date,
+                                "message_from": username
+                            };
+                        }
+                        catch (error) {
+                            return {
+                                "message_text": message.message,
+                                "message_date": message.date,
+                                "message_from": "N/A"
+                            };
+                        }
                     });
-                    return JSON.stringify(formatted);
+                    var string_result = JSON.stringify(formatted);
+                    return splitText(string_result);
                 }
                 catch (error) {
                     if (process.env.NODE_ENV !== "production")
@@ -329,7 +348,7 @@ class Agent {
                     if (error.code == 400) {
                         if (process.env.NODE_ENV !== "production")
                             console.log("Returning response");
-                        return JSON.stringify("The chat_id specified is wrong. Please use the telegram-chatroom-search tool to search for the chat_id again");
+                        return JSON.stringify("The chat_id specified is wrong. If you're looking for a chatroom please use the telegram-chatroom-search tool to search for the chat_id again. If you're looking for a user / contact to reply to or message please use the telegram-search-contacts-list");
                     }
                     return JSON.stringify(error);
                 }
@@ -430,19 +449,70 @@ class Agent {
                 return response;
             }
         });
+        Object.defineProperty(this, "searchContactsList", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: async ({ query }) => {
+                var result = await this.client.invoke(new Api.contacts.Search({
+                    q: query,
+                    limit: 3,
+                }));
+                const formattedUsers = result.users.map((user) => {
+                    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'N/A';
+                    const phoneNumber = user.phone || 'N/A';
+                    const userID = Number(user.id.value) || 'N/A';
+                    const chat_id = Number(user.id.value) || 'N/A'; // For compatibility with other tools which use chat_id
+                    return {
+                        fullName,
+                        phoneNumber,
+                        userID,
+                        chat_id
+                    };
+                });
+                // Limit the response to 400 characters
+                var response = JSON.stringify(formattedUsers);
+                if (response.length > 4000) {
+                    return response.slice(0, 4000);
+                }
+                return response;
+            }
+        });
         Object.defineProperty(this, "sendTelegramMessage", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: async ({ chat_id, message }) => {
-                return;
+            value: async ({ userID, message, confirmed }) => {
                 try {
-                    var result = await this.client.sendMessage(BigInt(chat_id), { message: message });
+                    const id_check = await this.client.invoke(new Api.users.GetUsers({
+                        id: [userID],
+                    }));
+                    if (id_check[0].contact == false) {
+                        return "This userID=" + userID + " is not a trusted contact. Please try find a different user";
+                    }
+                }
+                catch (error) {
+                    return "Couldn't find the userID specified. Please search for the correct userID";
+                }
+                if (confirmed == false) {
+                    return "Please ask if the message is ok to send first. If you have already confirmed, please set confirmed=true and try again. If not, please respond in this format: 'Before sending the message, could you please confirm if the following message is okay to send: /n {message} to user {full name}.'";
+                }
+                // console.log("SENT MESSAGE: " + message + " to: " + userID);
+                try {
+                    var result = await this.client.sendMessage(BigInt(userID), { message: message });
                 }
                 catch (error) {
                     return "Failed to send message with error: " + error;
                 }
-                return "The result of trying to send the message was: " + result;
+                return "Message sent successfully. Please set confirmed=false for future messages";
+            }
+        });
+        Object.defineProperty(this, "confirmMessage", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: async ({ chat_id, message }) => {
+                return "Message confirmed, please send it now. The following message is ok to send: chat_id=" + chat_id + " message=" + message + " confirmed=true";
             }
         });
         Object.defineProperty(this, "getChatroomAndMessage", {
@@ -612,9 +682,9 @@ class Agent {
             }),
             new DynamicStructuredTool({
                 name: "telegram-get-chatroom-history",
-                description: "Returns a history of the most recent messages in a given chatroom specified by chat_id. Use this option ONLY if a 9 digit chat_id from telegram-chatroom-search is known. chat_id MUST be given as a negative 9 digit number. The output is message_text (contents of message), message_date (timestamp of messge), message_from (who sent it)",
+                description: "Returns a history of the most recent messages in a given chatroom specified by chat_id or messages from a user given the userID. If asked to send a message to someone this can be useful to know what the previous messages were to reply to. Use this option ONLY if a 9 digit chat_id or userID is known. chat_id MUST be a negative number with 9 digits if you're looking for a chatroom. chat_id (userID) MUST be a positive number with 9 digits if you're looking for a user / contact. The output is message_text (contents of message), message_date (timestamp of messge), message_from (who sent it)",
                 schema: z.object({
-                    chat_id: z.number().describe("The ID of the chatroom. It MUST be a negative number with 9 digits")
+                    chat_id: z.number().describe("The ID of the chatroom or the userID")
                 }),
                 func: this.getChatHistory
             }),
@@ -634,6 +704,14 @@ class Agent {
                 func: this.getContactsList
             }),
             new DynamicStructuredTool({
+                name: "telegram-search-contacts-list",
+                description: "Searches for a contact. The output is formatted full name, phone number, then a 9 digit userID for each contact",
+                schema: z.object({
+                    query: z.string().describe("The search query, keep it brief and simple. Can't be empty"),
+                }),
+                func: this.searchContactsList
+            }),
+            new DynamicStructuredTool({
                 name: "telegram-get-unread-messages",
                 description: "Gets a list of all unread messages and recent updates. Only unread messages are shown. Only use this if specifically unread messages are needed. The output is formatted title (title of the chat room the message is in), chat_id which is the 9 digit ID of the chat, and number_unread which is how many unread messages there are, finally top_messaage is the most recent unread message content in that chat room",
                 schema: z.object({}),
@@ -648,12 +726,22 @@ class Agent {
                 }),
                 func: this.getChatroomAndMessage
             }),
+            // new DynamicStructuredTool({
+            // 	name: "telegram-send-message-confirm",
+            // 	description: "If the user confirms a message is ok to send, run this first before running telegram-send-message",
+            // 	schema: z.object({
+            // 		userID: z.string().describe("The userID of the user to send the message to. It MUST be a positive number with 9 digits"),
+            // 		message: z.string().describe("The message to send. Keep it brief and in a text message style"),
+            // 	}),
+            // 	func: this.confirmMessage
+            // }),
             new DynamicStructuredTool({
                 name: "telegram-send-message",
-                description: "Sends a message to a telegram chatroom. You must first use telegram-chatroom-or-user-search to get the chat_id of the user you want to send to. You must never use this without first asking for confirmation about what you want to send",
+                description: "Sends a message to a telegram user directly. ONLY use this after you have checked if a message is ok to send. If you don't know the userID you must first use telegram-search-contacts-list to get the userID of the user you want to send to. You must never use this without first asking for confirmation about what you want to send.",
                 schema: z.object({
-                    chat_id: z.string().describe("The ID of the user to send the message to. It MUST be a positive number with 9 digits"),
-                    message: z.string().describe("The message to send. Keep it brief and in a text message style. Start messages with 'Anneyonghasimnikka' as the greeting but only if necessary"),
+                    userID: z.string().describe("The userID of the user to send the message to. It MUST be a positive number with 9 digits"),
+                    message: z.string().describe("The message to send. Keep it brief and in a text message style"),
+                    confirmed: z.boolean().default(false).describe("True if the message has been confirmed already and is ok to send")
                 }),
                 func: this.sendTelegramMessage
             }),
@@ -668,7 +756,7 @@ class Agent {
             }),
             new DynamicStructuredTool({
                 name: "telegram-chatroom-or-user-search",
-                description: "Searches for a chat_ID for a chatroom or user (9 digit chat ID) based off a serach query",
+                description: "Searches for a chat_ID for a chatroom (9 digit chat ID) based off a serach query",
                 schema: z.object({
                     query: z.string().describe("The search query, keep it brief and simple"),
                 }),
@@ -683,14 +771,14 @@ class Agent {
                 }),
                 func: this.searchDropbox
             }),
-            new DynamicStructuredTool({
-                name: "end-conversation",
-                description: "When it seems like the conversation has ended and a new topic will be discussed this should be run first to reset the history. If you want to continue answering the user's prompt after reset, send a prompt to the optional prompt option",
-                schema: z.object({
-                    prompt: z.string().default("This is a messge from yourself. Your memory has just been reset").describe("If resetting memory will make you forget what you need to do, put the prompt here"),
-                }),
-                func: this.resetMemory
-            }),
+            // new DynamicStructuredTool({
+            // 	name: "end-conversation",
+            // 	description: "When it seems like the conversation has ended and a new topic will be discussed this should be run first to reset the history. If you want to continue answering the user's prompt after reset, send a prompt to the optional prompt option",
+            // 	schema: z.object({
+            // 		prompt: z.string().default("This is a messge from yourself. Your memory has just been reset").describe("If resetting memory will make you forget what you need to do, put the prompt here"),
+            // 	}),
+            // 	func: this.resetMemory 
+            // }),
             // For google searches
             serpApi
         ];
