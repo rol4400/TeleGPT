@@ -26,7 +26,7 @@ const axios = require("axios");
 
 // Tools
 const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require ('./tools/google-calendar/index.js');
-const { splitText } = require("text-spitter.js");
+const { splitText } = require("./text-spitter.js");
 
 // DEV Input
 //const input = require("input"); // npm i input
@@ -473,6 +473,17 @@ class Agent {
 	
 		return response;
 	}
+
+	sendTelegramMessage = async ({ chat_id, message }: any) => {
+
+		return;
+		try {
+			var result = await this.client.sendMessage(BigInt(chat_id), { message: message });
+		} catch (error) {
+			return "Failed to send message with error: " + error;
+		}
+		return "The result of trying to send the message was: " + result;
+	}
 	
 	getChatroomAndMessage = async ({ chatroom_query, message_query }: any) => {
 	
@@ -629,6 +640,16 @@ class Agent {
 				}),
 				func: this.getChatroomAndMessage
 			}),
+
+			new DynamicStructuredTool({
+				name: "telegram-send-message",
+				description: "Sends a message to a telegram chatroom. You must first use telegram-chatroom-or-user-search to get the chat_id of the user you want to send to. You must never use this without first asking for confirmation about what you want to send",
+				schema: z.object({
+					chat_id: z.string().describe("The ID of the user to send the message to. It MUST be a positive number with 9 digits"),
+					message: z.string().describe("The message to send. Keep it brief and in a text message style. Start messages with 'Anneyonghasimnikka' as the greeting but only if necessary"),
+				}),
+				func: this.sendTelegramMessage
+			}),
 		
 			new DynamicStructuredTool({
 				name: "telegram-message-search-by-chatroom",
@@ -641,8 +662,8 @@ class Agent {
 			}),
 		
 			new DynamicStructuredTool({
-				name: "telegram-chatroom-search",
-				description: "Searches for a chat_ID for a chatroom (9 digit chat ID) based off a serach query",
+				name: "telegram-chatroom-or-user-search",
+				description: "Searches for a chat_ID for a chatroom or user (9 digit chat ID) based off a serach query",
 				schema: z.object({
 					query: z.string().describe("The search query, keep it brief and simple"),
 				}),

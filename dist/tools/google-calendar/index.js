@@ -6,7 +6,7 @@ const { InitializeAgentExecutorOptions, initializeAgentExecutorWithOptions } = r
 const { GoogleCalendarCreateTool, GoogleCalendarViewTool } = require('./tools/index.js');
 exports.GoogleCalendarCreateTool = GoogleCalendarCreateTool;
 exports.GoogleCalendarViewTool = GoogleCalendarViewTool;
-const { splitText } = require("text-spitter.js");
+const text_spitter_js_1 = require("../../text-spitter.js");
 class GoogleCalendarAgent {
     constructor({ mode = 'full', calendarOptions, openApiOptions = { temperature: 0 }, executorOptions = {
         agentType: 'chat-zero-shot-react-description',
@@ -54,8 +54,8 @@ class GoogleCalendarAgent {
     }
     async execute(input) {
         // Ensure the character limit isn't breached
-        input = await splitText(input);
-        const response = await this.agent.call({ input });
+        input = await (0, text_spitter_js_1.splitText)(input);
+        const response = await this.agent.call({ input: input });
         return response;
     }
 }

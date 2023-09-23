@@ -9,7 +9,7 @@ const {
 } = require('./tools/index.js')
 import type { GoogleCalendarAgentParams } from './tools/google-calendar-base.js'
 
-const { splitText } = require("text-spitter.js");
+import { splitText } from "../../text-spitter.js";
 
 type OpenAIOptions =
   any & {
@@ -68,7 +68,7 @@ class GoogleCalendarAgent {
     // Ensure the character limit isn't breached
     input = await splitText(input);
 
-    const response = await this.agent.call({ input })
+    const response = await this.agent.call({ input: input })
     return response
   }
 }

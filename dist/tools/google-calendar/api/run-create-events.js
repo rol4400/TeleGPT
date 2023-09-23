@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runCreateEvent = void 0;
 const { PromptTemplate } = require('langchain/prompts');
 const { LLMChain } = require('langchain/chains');
-const { splitText } = require("text-spitter.js");
+const text_spitter_js_1 = require("../../../text-spitter.js");
 const googleapis_1 = require("googleapis");
 const index_js_1 = require("../prompts/index.js");
 const index_js_2 = require("../utils/index.js");
@@ -49,7 +49,7 @@ const runCreateEvent = async (query, { calendarId, auth, model }) => {
     const u_timezone = (0, index_js_2.getTimezoneOffsetInHours)();
     const dayName = new Date().toLocaleString('en-us', { weekday: 'long' });
     // Ensure the character limit isn't breached
-    query = await splitText(query);
+    query = await (0, text_spitter_js_1.splitText)(query);
     const output = await createEventChain.call({
         query,
         date,

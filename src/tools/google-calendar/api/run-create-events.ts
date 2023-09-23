@@ -1,6 +1,6 @@
 const { PromptTemplate } = require ('langchain/prompts');
 const { LLMChain } = require ('langchain/chains');
-const { splitText } = require("text-spitter.js");
+import { splitText } from "../../../text-spitter.js";
 
 import { google } from 'googleapis'
 import { CREATE_EVENT_PROMPT } from '../prompts/index.js'
