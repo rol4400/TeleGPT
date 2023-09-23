@@ -8,8 +8,7 @@ const { initializeAgentExecutorWithOptions } = require("langchain/agents");
 const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
 const { BufferMemory } = require("langchain/memory");
-const { DynamicStructuredTool } = require("langchain/tools");
-const { SerpAPI } = require("langchain/tools");
+const { DynamicStructuredTool, AIPluginTool, SerpAPI } = require("langchain/tools");
 const { VectorStoreRetrieverMemory } = require("langchain/memory");
 const { LLMChain } = require("langchain/chains");
 const { PromptTemplate } = require("langchain/prompts");
@@ -23,8 +22,14 @@ const { JSDOM } = require("jsdom");
 const axios = require("axios");
 // Tools
 const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require('./tools/google-calendar/index.js');
-// const { MessageSenderTool } = require ('./tools/message-sender/index.js');
+const { TiktikAddTask } = require('./tools/tiktik/index.js');
 const { splitText } = require("./text-spitter.js");
+const fs = require("fs");
+const yaml = require("js-yaml");
+const { createOpenApiAgent, OpenApiToolkit } = require("langchain/agents");
+const { JsonSpec, JsonObject } = require("langchain/tools");
+const { createOpenAPIChain } = require("langchain/chains");
+const qs = require('qs');
 // DEV Input
 //const input = require("input"); // npm i input
 var serpApi = new SerpAPI(process.env.SERPAPI_API_KEY, {
@@ -96,6 +101,12 @@ class Agent {
             value: void 0
         });
         Object.defineProperty(this, "vectorStore", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "ticktickTool", {
             enumerable: true,
             configurable: true,
             writable: true,
@@ -507,14 +518,10 @@ class Agent {
                 return "Message sent successfully. Please set confirmed=false for future messages";
             }
         });
-        Object.defineProperty(this, "confirmMessage", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: async ({ chat_id, message }) => {
-                return "Message confirmed, please send it now. The following message is ok to send: chat_id=" + chat_id + " message=" + message + " confirmed=true";
-            }
-        });
+        // TODO: Remove this
+        // confirmMessage = async ({ chat_id, message }: any) => {
+        // 	return "Message confirmed, please send it now. The following message is ok to send: chat_id=" + chat_id + " message=" + message + " confirmed=true"
+        // }
         Object.defineProperty(this, "getChatroomAndMessage", {
             enumerable: true,
             configurable: true,
@@ -658,6 +665,7 @@ class Agent {
             },
             handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
         });
+        // await this.initTiktikAPI();
     }
     async run(query) {
         // Ensure the character limit isn't breached
@@ -668,10 +676,29 @@ class Agent {
     ;
     // Setup the custom tools
     setupTools() {
+        let data;
+        try {
+            const yamlFile = fs.readFileSync("./src/ticktick.yaml", "utf8");
+            data = yaml.load(yamlFile);
+            if (!data) {
+                throw new Error("Failed to load OpenAPI spec");
+            }
+        }
+        catch (e) {
+            console.error(e);
+            return;
+        }
+        const headers = {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+        };
+        this.ticktickTool = new OpenApiToolkit(new JsonSpec(data), model, headers);
+        console.log(this.ticktickTool.tools);
         this.tools = [
             new Calculator(),
             new GoogleCalendarCreateTool(googleCalendarParams),
             new GoogleCalendarViewTool(googleCalendarParams),
+            new TiktikAddTask(),
             new DynamicStructuredTool({
                 name: "telegram-message-search-global",
                 description: "Searches through all telegram chats for the given query and returns the results in order of relevance",
@@ -726,6 +753,14 @@ class Agent {
                 }),
                 func: this.getChatroomAndMessage
             }),
+            // new DynamicStructuredTool({
+            // 	name: "tiktik-todo-list",
+            // 	description: "Used for anything relating to a todo list",
+            // 	schema: z.object({
+            // 		query: z.string().describe("A query for the open api chain relating to what you want to do with the todo list"),
+            // 	}),
+            // 	func: this.tiktikAPI
+            // }),
             // new DynamicStructuredTool({
             // 	name: "telegram-send-message-confirm",
             // 	description: "If the user confirms a message is ok to send, run this first before running telegram-send-message",
@@ -782,6 +817,7 @@ class Agent {
             // For google searches
             serpApi
         ];
+        this.tools.push(...this.ticktickTool.tools); // Add all the ticktick tools
     }
 }
 module.exports = Agent;
