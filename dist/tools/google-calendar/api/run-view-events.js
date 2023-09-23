@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runViewEvents = void 0;
 const { PromptTemplate } = require('langchain/prompts');
 const { LLMChain } = require('langchain/chains');
+const { splitText } = require("text-spitter.js");
 const googleapis_1 = require("googleapis");
 const index_js_1 = require("../prompts/index.js");
 const index_js_2 = require("../utils/index.js");
@@ -19,6 +20,8 @@ const runViewEvents = async (query, { model, auth, calendarId }) => {
     const date = new Date().toISOString();
     const u_timezone = (0, index_js_2.getTimezoneOffsetInHours)();
     const dayName = new Date().toLocaleString('en-us', { weekday: 'long' });
+    // Ensure the character limit isn't breached
+    query = await splitText(query);
     const output = await viewEventsChain.call({
         query,
         date,

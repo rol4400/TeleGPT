@@ -23,6 +23,7 @@ const { JSDOM } = require("jsdom");
 const axios = require("axios");
 // Tools
 const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require('./tools/google-calendar/index.js');
+const { splitText } = require("text-spitter.js");
 // DEV Input
 //const input = require("input"); // npm i input
 var serpApi = new SerpAPI(process.env.SERPAPI_API_KEY, {
@@ -574,6 +575,8 @@ class Agent {
         });
     }
     async run(query) {
+        // Ensure the character limit isn't breached
+        query = await splitText(query);
         const result = await this.executor.call({ input: query });
         return result;
     }

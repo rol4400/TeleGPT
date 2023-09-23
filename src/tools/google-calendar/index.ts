@@ -9,6 +9,8 @@ const {
 } = require('./tools/index.js')
 import type { GoogleCalendarAgentParams } from './tools/google-calendar-base.js'
 
+const { splitText } = require("text-spitter.js");
+
 type OpenAIOptions =
   any & {
     concurrency?: number
@@ -62,6 +64,10 @@ class GoogleCalendarAgent {
   }
 
   async execute(input: string) {
+
+    // Ensure the character limit isn't breached
+    input = await splitText(input);
+
     const response = await this.agent.call({ input })
     return response
   }

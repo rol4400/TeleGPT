@@ -26,6 +26,7 @@ const axios = require("axios");
 
 // Tools
 const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require ('./tools/google-calendar/index.js');
+const { splitText } = require("text-spitter.js");
 
 // DEV Input
 //const input = require("input"); // npm i input
@@ -116,6 +117,10 @@ class Agent {
 	}
 	
 	async run(query: string) {
+
+		// Ensure the character limit isn't breached
+		query = await splitText(query);
+
 		const result = await this.executor.call({ input: query });
 		return result;
 	};

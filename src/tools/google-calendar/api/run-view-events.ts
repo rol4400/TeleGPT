@@ -1,5 +1,7 @@
 const { PromptTemplate } = require ('langchain/prompts');
 const { LLMChain } = require ('langchain/chains');
+const { splitText } = require("text-spitter.js");
+
 import { google } from 'googleapis'
 import { VIEW_EVENTS_PROMPT } from '../prompts/index.js'
 import { getTimezoneOffsetInHours } from '../utils/index.js'
@@ -29,6 +31,9 @@ const runViewEvents = async (
   const date = new Date().toISOString()
   const u_timezone = getTimezoneOffsetInHours()
   const dayName = new Date().toLocaleString('en-us', { weekday: 'long' })
+
+  // Ensure the character limit isn't breached
+  query = await splitText(query);
 
   const output = await viewEventsChain.call({
     query,
