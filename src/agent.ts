@@ -85,7 +85,6 @@ class Agent {
 	client: any;
 	tools: any[];
 	vectorStore: any;
-	ticktickTool: any;
 	
 	constructor(executor_client: any) {
 
@@ -671,26 +670,6 @@ class Agent {
 	// Setup the custom tools
 	setupTools(){
 
-		let data: any;
-		try {
-			const yamlFile = fs.readFileSync("./src/ticktick.yaml", "utf8");
-			data = yaml.load(yamlFile);
-			if (!data) {
-			throw new Error("Failed to load OpenAPI spec");
-			}
-		} catch (e) {
-			console.error(e);
-			return;
-		}
-
-		const headers = {
-			"Content-Type": "application/json",
-			Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-		};
-		this.ticktickTool = new OpenApiToolkit(new JsonSpec(data), model, headers);
-
-		console.log(this.ticktickTool.tools);
-		
 		this.tools = [
 			new Calculator(),
 
@@ -819,20 +798,9 @@ class Agent {
 				func: this.searchDropbox
 			}),
 
-			// new DynamicStructuredTool({
-			// 	name: "end-conversation",
-			// 	description: "When it seems like the conversation has ended and a new topic will be discussed this should be run first to reset the history. If you want to continue answering the user's prompt after reset, send a prompt to the optional prompt option",
-			// 	schema: z.object({
-			// 		prompt: z.string().default("This is a messge from yourself. Your memory has just been reset").describe("If resetting memory will make you forget what you need to do, put the prompt here"),
-			// 	}),
-			// 	func: this.resetMemory 
-			// }),
-		
 			// For google searches
 			serpApi
 		];
-
-		this.tools.push(...this.ticktickTool.tools); // Add all the ticktick tools
 	}
 
 	resetMemory = async ({prompt}:any) => {

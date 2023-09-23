@@ -8,7 +8,7 @@ const axios = require("axios");
 const text_spitter_js_1 = require("../../../text-spitter.js");
 const googleapis_1 = require("googleapis");
 const index_js_1 = require("../prompts/index.js");
-const get_timezone_offset_in_hours_js_1 = require("tools/google-calendar/utils/get-timezone-offset-in-hours.js");
+const get_timezone_offset_in_hours_js_1 = require("../../google-calendar/utils/get-timezone-offset-in-hours.js");
 const calendar = googleapis_1.google.calendar('v3');
 const addTask = async (params) => {
     var config = {
@@ -51,9 +51,7 @@ const runAddTask = async (query, { model }) => {
         u_timezone,
         dayName
     });
-    console.log(output['text']);
     const loaded = JSON.parse(output['text']);
-    console.log(loaded);
     return await addTask(loaded);
 };
 exports.runAddTask = runAddTask;

@@ -8,7 +8,7 @@ import { splitText } from "../../../text-spitter.js";
 
 import { google } from 'googleapis'
 import { ADD_TASK_PROMPT } from '../prompts/index.js'
-import { getTimezoneOffsetInHours } from "tools/google-calendar/utils/get-timezone-offset-in-hours.js";
+import { getTimezoneOffsetInHours } from "../../google-calendar/utils/get-timezone-offset-in-hours.js";
 
 const calendar = google.calendar('v3')
 
@@ -68,11 +68,7 @@ const runAddTask = async (
     dayName
   })
 
-  console.log(output['text']);
-
   const loaded = JSON.parse(output['text'])
-
-  console.log(loaded);
 
     return  await addTask(loaded);
   
