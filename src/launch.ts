@@ -37,6 +37,10 @@ function generatePromise() {
 
 // app.use(express.static(path.resolve(__dirname, '../www/public')));
 
+app.post('/query', function(_req:any, res:any) {
+    res.send("Hello world");
+})
+
 app.get('/testApi', function(_req:any, res:any) {
     res.send("Tested Well");
 })
