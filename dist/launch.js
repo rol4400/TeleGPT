@@ -14,10 +14,12 @@ const path = require('path');
 const app = express();
 const port = process.env.PORT || 5000;
 app.use(express.json());
+const axios = require("axios");
 // Deta space data storage
 const { Deta } = require('deta');
 const detaInstance = Deta(); //instantiate with Data Key or env DETA_PROJECT_KEY
 const db = detaInstance.Base("Users");
+let tick = require('./tools/tiktik/api/tick');
 // Create a promise for use in prompting the user for 2FA phone codes
 let globalPhoneCodePromise;
 function generatePromise() {
@@ -30,6 +32,8 @@ function generatePromise() {
     return { resolve, reject, promise };
 }
 // app.use(express.static(path.resolve(__dirname, '../www/public')));
+// app.post('/query', function(_req:any, res:any) {
+// })
 app.get('/testApi', function (_req, res) {
     res.send("Tested Well");
 });

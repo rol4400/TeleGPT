@@ -4,7 +4,7 @@ const {
   initializeAgentExecutorWithOptions
 } = require('langchain/agents')
 const {
-  TiktikAddTask,
+  TiktikAddTask, TiktikGetTasks
 } = require('./tools/index.js')
 
 const { DynamicStructuredTool } = require("langchain/tools");
@@ -106,4 +106,4 @@ import { splitText } from "../../text-spitter.js";
 //   }
 // }
 
-export { TiktikAddTask }
+export { TiktikAddTask, TiktikGetTasks }

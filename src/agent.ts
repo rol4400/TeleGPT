@@ -25,7 +25,7 @@ const axios = require("axios");
 
 // Tools
 const { GoogleCalendarViewTool, GoogleCalendarCreateTool } = require ('./tools/google-calendar/index.js');
-const { TiktikAddTask } = require ('./tools/tiktik/index.js');
+const { TiktikAddTask, TiktikGetTasks } = require ('./tools/tiktik/index.js');
 
 const { splitText } = require("./text-spitter.js");
 const fs = require ("fs");
@@ -676,6 +676,7 @@ class Agent {
 			new GoogleCalendarCreateTool(googleCalendarParams),
     		new GoogleCalendarViewTool(googleCalendarParams),
 			new TiktikAddTask(),
+			new TiktikGetTasks(),
 		
 			new DynamicStructuredTool({
 				name: "telegram-message-search-global",

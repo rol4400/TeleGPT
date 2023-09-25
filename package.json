@@ -27,6 +27,7 @@
     "@aws-sdk/lib-dynamodb": "^3.413.0",
     "axios": "^1.5.0",
     "body-parser": "^1.20.2",
+    "bson-objectid": "^2.0.4",
     "chalk": "^4.1.2",
     "deta": "^2.0.0",
     "dotenv": "^16.3.1",
