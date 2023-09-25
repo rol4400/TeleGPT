@@ -1,5 +1,5 @@
 import { TiktikBase } from './tiktik-base.js';
-export declare class TiktikAddTask extends TiktikBase {
+export declare class TiktikGetTasks extends TiktikBase {
     name: string;
     description: string;
     constructor();
