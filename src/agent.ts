@@ -614,6 +614,32 @@ class Agent {
 			return JSON.stringify(error);
 		}
 	}
+
+	getDateTime = async () => {
+
+		const date_string = new Date().toISOString()
+		const dayName = new Date().toLocaleString('en-us', { weekday: 'long' })
+		
+		let date = new Date(); 
+		let hh = date.getHours();
+		let mm = date.getMinutes();
+		let ss = date.getSeconds();
+		let session = "AM";
+	  
+		if(hh == 0){
+			hh = 12;
+		}
+		if(hh > 12){
+			hh = hh - 12;
+			session = "PM";
+		 }
+					
+		 let time = (hh < 10) ? "0" + hh : hh + ":" + (mm < 10) ? "0" + mm : mm + ":" + (ss < 10) ? "0" + ss : ss + " " + session;
+		 var string_out = `Date format: YYYY-MM-DDThh:mm:ss+00:00
+		 Today's datetime on UTC time ` + date_string + ` , it's ` + dayName + ` the timezone of the user +10, and the current time is: ` + time;
+
+		return string_out
+	}
 	
 	formatChatSearchResults = async (result: any) => {
 	
@@ -807,6 +833,13 @@ class Agent {
 					type: z.enum(["", "image", "video", "document", "pdf", "folder", "presentation"]).default("").describe("The type of resource to search for"),
 				}),
 				func: this.searchDropbox
+			}),
+
+			new DynamicStructuredTool({
+				name: "get-date-time",
+				description: "Get's the current date and time right now",
+				schema: z.object({}),
+				func: this.getDateTime
 			}),
 
 			// For google searches
