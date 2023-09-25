@@ -1,2 +1,2 @@
-declare const TiktikAddTask: any;
-export { TiktikAddTask };
+declare const TiktikAddTask: any, TiktikGetTasks: any;
+export { TiktikAddTask, TiktikGetTasks };

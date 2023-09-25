@@ -10,3 +10,9 @@ INPUT example:
 OUTPUT:
 Output is a confirmation of a created task on the todo list.
 `
+export const GET_TASK_DESCRIPTION = `A tool gettings all the tasks and reminders on the todo list
+
+"action": "tiktik-get-tasks",
+
+OUTPUT:
+Output is a JSON array of tasks`

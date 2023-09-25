@@ -1,10 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TiktikAddTask = void 0;
+exports.TiktikGetTasks = exports.TiktikAddTask = void 0;
 const { ChatOpenAI } = require('langchain/chat_models/openai');
 const { InitializeAgentExecutorOptions, initializeAgentExecutorWithOptions } = require('langchain/agents');
-const { TiktikAddTask, } = require('./tools/index.js');
+const { TiktikAddTask, TiktikGetTasks } = require('./tools/index.js');
 exports.TiktikAddTask = TiktikAddTask;
+exports.TiktikGetTasks = TiktikGetTasks;
 const { DynamicStructuredTool } = require("langchain/tools");
 const { MessagesPlaceholder } = require("langchain/prompts");
 const { PromptTemplate } = require('langchain/prompts');
