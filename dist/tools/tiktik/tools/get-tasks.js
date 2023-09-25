@@ -1,17 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TiktikAddTask = void 0;
+exports.TiktikGetTasks = void 0;
 const tool_descriptions_js_1 = require("./tool-descriptions.js");
 const run_get_tasks_js_1 = require("../api/run-get-tasks.js");
 const tiktik_base_js_1 = require("./tiktik-base.js");
-class TiktikAddTask extends tiktik_base_js_1.TiktikBase {
+class TiktikGetTasks extends tiktik_base_js_1.TiktikBase {
     constructor() {
         super();
         Object.defineProperty(this, "name", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: 'tiktik-get-task'
+            value: 'tiktik-get-tasks'
         });
         Object.defineProperty(this, "description", {
             enumerable: true,
@@ -25,5 +25,5 @@ class TiktikAddTask extends tiktik_base_js_1.TiktikBase {
         return await (0, run_get_tasks_js_1.runGetTask)();
     }
 }
-exports.TiktikAddTask = TiktikAddTask;
+exports.TiktikGetTasks = TiktikGetTasks;
 //# sourceMappingURL=get-tasks.js.map

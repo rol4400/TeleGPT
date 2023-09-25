@@ -7,7 +7,7 @@ const { ChatOpenAI } = require("langchain/chat_models/openai");
 const { initializeAgentExecutorWithOptions } = require("langchain/agents");
 const { Calculator } = require("langchain/tools/calculator");
 const { MessagesPlaceholder } = require("langchain/prompts");
-const { BufferMemory } = require("langchain/memory");
+const { BufferMemory, BufferWindowMemory } = require("langchain/memory");
 const { DynamicStructuredTool, AIPluginTool, SerpAPI } = require("langchain/tools");
 const { VectorStoreRetrieverMemory } = require("langchain/memory");
 const { LLMChain } = require("langchain/chains");
@@ -51,10 +51,19 @@ If I ask for help to reply to a message or draft a response. Please first get th
 
 Also word the messages in such as way as if I am sending it not yourself. Don't address people unnecessarially but if you do then you can use "Anneyonghasimnikka" to greet them. 
 Keep messages simple and not over the top friendly. Don't use cute emoji
+
+If you are asked to schedules todos into the calendar, please first call tiktik-get-tasks to get a list of all tasks. If tasks have a reminder then that implies that that todo list task should be done on the day of the reminder so don't schedule tasks that don't need to be done today
+Only schedule tasks after the current time. 
+Then automatically approximate the duration of each. Next call google_calendar_view to find all the existing events for today. 
+Then use google_calendar_create to create a calendar event with the same name as the todo task for each todo that can fit and not overlap an existing event. 
+Prioritise based on priority of todo task. 
+
+If you run more than 5 tools, stop and ask "It's taking a while, shall I continue?" to prevent yourself from going over the token limit. Never run more than 5 tools at once before stopping
 `;
 //var prefix_messages= [new SystemMessage(prompt_prefix)]
 const model = new ChatOpenAI({
-    temperature: 0.3
+    temperature: 0.3,
+    maxRetries: 10
 });
 // Google Calendar Auth
 const googleCalendarParams = {
@@ -624,7 +633,8 @@ class Agent {
             }
         });
         this.vectorStore = new MemoryVectorStore(new OpenAIEmbeddings());
-        this.memory = new BufferMemory({
+        this.memory = new BufferWindowMemory({
+            k: 3,
             memoryKey: "chat_history",
             vectorStoreRetriever: this.vectorStore.asRetriever(1),
             returnMessages: true,

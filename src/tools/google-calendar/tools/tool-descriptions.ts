@@ -32,4 +32,6 @@ INPUT examples:
 
 OUTPUT:
 - title, start time, end time, attendees, description (if available)
+
+If output is empty, it means that the whole day is free
 `

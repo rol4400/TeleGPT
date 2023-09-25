@@ -3,7 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.runViewEvents = void 0;
 const { PromptTemplate } = require('langchain/prompts');
 const { LLMChain } = require('langchain/chains');
-// const { splitText } = require("../../../text-spitter.js");
 const text_spitter_js_1 = require("../../../text-spitter.js");
 const googleapis_1 = require("googleapis");
 const index_js_1 = require("../prompts/index.js");

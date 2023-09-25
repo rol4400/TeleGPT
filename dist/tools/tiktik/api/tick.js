@@ -114,17 +114,37 @@ module.exports = class tick {
                     startDate: item.startDate,
                     dueDate: item.dueDate,
                     isAllDay: item.isAllDay,
+                    reminder: item.reminder,
                     repeatFlag: item.repeatFlag,
                     priority: item.priority,
                     status: item.status,
                 }));
+                const date_string = new Date().toISOString();
+                const dayName = new Date().toLocaleString('en-us', { weekday: 'long' });
+                let date = new Date();
+                let hh = date.getHours();
+                let mm = date.getMinutes();
+                let ss = date.getSeconds();
+                let session = "AM";
+                if (hh == 0) {
+                    hh = 12;
+                }
+                if (hh > 12) {
+                    hh = hh - 12;
+                    session = "PM";
+                }
+                let time = (hh < 10) ? "0" + hh : hh + ":" + (mm < 10) ? "0" + mm : mm + ":" + (ss < 10) ? "0" + ss : ss + " " + session;
                 const introduction = `The following are the parameters
                 title: string - Task title
                 isAllDay: boolean - Is the task an all day event or not
                 startDate: Date - Start date and time in "yyyy-MM-dd'T'HH:mm:ssZ" format Example : "2019-11-13T03:00:00+0000"
                 dueDate: Date - Due date and time in "yyyy-MM-dd'T'HH:mm:ssZ" format Example : "2019-11-13T03:00:00+0000"
+                reminder: string - Reminder specific to the task. The default value is "TRIGGER:-PT15M", indicating to remind 15mins before. The format "TRIGGER:-PTxxM" should be used where xx is the number of mins before the event that the reminder should be given
                 repeatFlag: string - Recurring rules of task Example : "RRULE:FREQ=DAILY;INTERVAL=1" would mean to repeat every day
                 priority: number - Value: None:0, Low:1, Medium:3, High:5
+
+                Date format: YYYY-MM-DDThh:mm:ss+00:00
+                Today's datetime on UTC time ` + date_string + ` , it's ` + dayName + ` the timezone of the user +10, and the current time is: ` + time + `,
 
                 Current tasks:
                 `;
