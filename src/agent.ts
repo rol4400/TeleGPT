@@ -568,7 +568,7 @@ class Agent {
 		}
 
 		if (confirmed == false) {
-			return "Please ask if the message is ok to send first. If you have already confirmed an identical message, please set confirmed=true and try again immediately. If not, please respond in this format: 'Before sending the message, could you please confirm if the following message is okay to send: /n {message} to user {full name}.'"
+			return "If you have already confirmed a message the same as this one, please run telegram-send-message and set 'confirmed' to true. If this message was not confirmed before, please respond in this format: 'Before sending the message, could you please confirm if the following message is okay to send: /n {message} to user {full name}.'"
 		}
 
 		// console.log("SENT MESSAGE: " + message + " to: " + userID);
@@ -807,7 +807,7 @@ class Agent {
 				schema: z.object({
 					userID: z.string().describe("The userID or chatID of the user to send the message to. It MUST be a positive number with 9 digits"),
 					message: z.string().describe("The message to send. Keep it brief and in a text message style"),
-					confirmed: z.boolean().default(false).describe("True if the message has been confirmed already and is ok to send")
+					confirmed: z.boolean().describe("True if the message has been agreed upon to be sent, false if the user hasn't agreed yet to let you send it")
 				}),
 				func: this.sendTelegramMessage
 			}),
