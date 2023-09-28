@@ -500,11 +500,13 @@ class Agent {
             writable: true,
             value: async ({ userID, message, confirmed }) => {
                 try {
-                    const id_check = await this.client.invoke(new Api.users.GetUsers({
-                        id: [userID],
-                    }));
-                    if (id_check[0].contact == false) {
-                        return "This userID=" + userID + " is not a trusted contact. Please try find a different user";
+                    if (Number(userID) > 0) {
+                        const id_check = await this.client.invoke(new Api.users.GetUsers({
+                            id: [userID],
+                        }));
+                        if (id_check[0].contact == false) {
+                            return "This userID=" + userID + " is not a trusted contact. Please try find a different user";
+                        }
                     }
                 }
                 catch (error) {
@@ -518,7 +520,8 @@ class Agent {
                     var result = await this.client.sendMessage(BigInt(userID), { message: message });
                 }
                 catch (error) {
-                    return "Failed to send message with error: " + error;
+                    console.log("Failed to send message with error: " + error);
+                    return "Couldn't send the message to userID=" + userID + " please use telegram-chatroom-or-user-search and telegram-search-contacts-list to find either a chatID or userID";
                 }
                 return "Message sent successfully. Please set confirmed=false for future messages";
             }
@@ -786,9 +789,9 @@ class Agent {
             // }),
             new DynamicStructuredTool({
                 name: "telegram-send-message",
-                description: "Sends a message to a telegram user directly. ONLY use this after you have checked if a message is ok to send. If you don't know the userID you must first use telegram-search-contacts-list to get the userID of the user you want to send to. You must never use this without first asking for confirmation about what you want to send.",
+                description: "Sends a message to a telegram user directly. ONLY use this after you have checked if a message is ok to send. If you don't know the userID or chatID you must first use telegram-search-contacts-list to get the userID or telegram-chatroom-or-user-search to get the chatID of the user or chatroom you want to send to. You must never use this without first asking for confirmation about what you want to send.",
                 schema: z.object({
-                    userID: z.string().describe("The userID of the user to send the message to. It MUST be a positive number with 9 digits"),
+                    userID: z.string().describe("The userID or chatID of the user to send the message to. It MUST be a positive number with 9 digits"),
                     message: z.string().describe("The message to send. Keep it brief and in a text message style"),
                     confirmed: z.boolean().default(false).describe("True if the message has been confirmed already and is ok to send")
                 }),
