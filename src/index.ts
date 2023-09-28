@@ -19,11 +19,12 @@ const bot = new Telegraf(process.env.BOT_TOKEN)
 let agent = new Agent(client);
 agent.init();
 
-(async function init() {
-    // Connect to the Telegram API
-    await client.connect();
-    agent.init();
-})();
+// Express routing
+const express = require("express");
+const path = require('path');
+const app = express();
+const port = process.env.PORT || 8080;
+app.use(express.json());
 
 async function updateVoiceCaption(caption:string){
     const message_id = (await client.invoke(
@@ -47,7 +48,7 @@ async function updateVoiceCaption(caption:string){
         peer: "tele_gpt_rol4400_bot",
         id: message_id,
         message: caption,
-    }))
+    }));
 }
 
 bot.on('voice', async (ctx:any) => {
@@ -95,7 +96,7 @@ bot.on('voice', async (ctx:any) => {
             });
         })
     })
-})
+});
 
 bot.on('text', async (ctx:any) => {
 
@@ -106,9 +107,34 @@ bot.on('text', async (ctx:any) => {
         var answer = await agent.run(ctx.message.text);
         return ctx.replyWithHTML(marked.parseInline(answer.output));
     })
-})
+});
+
+app.post('/query', async function(req:any, res:any) {
+
+    var messages = req.body.messages[req.body.messages.length - 1].content;
+
+    console.log(req.body.messages[req.body.messages.length - 1].content);
+
+    var answer = await agent.run(messages);
+
+    res.send({
+        "content": answer.output
+    });
+  
+});
+
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`);
+});
+
+(async function init() {
+    // Connect to the Telegram API
+    await client.connect();
+    agent.init();
+})();
 
 bot.launch()
+
 
 // TODO: Add reminder capability with crontab API
 // const setCRONReminder = async ({crontab, reminder_text}:any) => {

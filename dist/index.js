@@ -16,11 +16,12 @@ const client = new TelegramClient(session, apiId, apiHash, {});
 const bot = new Telegraf(process.env.BOT_TOKEN);
 let agent = new Agent(client);
 agent.init();
-(async function init() {
-    // Connect to the Telegram API
-    await client.connect();
-    agent.init();
-})();
+// Express routing
+const express = require("express");
+const path = require('path');
+const app = express();
+const port = process.env.PORT || 8080;
+app.use(express.json());
 async function updateVoiceCaption(caption) {
     const message_id = (await client.invoke(
     // Get the message ID
@@ -89,6 +90,22 @@ bot.on('text', async (ctx) => {
         return ctx.replyWithHTML(marked.parseInline(answer.output));
     });
 });
+app.post('/query', async function (req, res) {
+    var messages = req.body.messages[req.body.messages.length - 1].content;
+    console.log(req.body.messages[req.body.messages.length - 1].content);
+    var answer = await agent.run(messages);
+    res.send({
+        "content": answer.output
+    });
+});
+app.listen(port, () => {
+    console.log(`Example app listening on port ${port}`);
+});
+(async function init() {
+    // Connect to the Telegram API
+    await client.connect();
+    agent.init();
+})();
 bot.launch();
 // TODO: Add reminder capability with crontab API
 // const setCRONReminder = async ({crontab, reminder_text}:any) => {
