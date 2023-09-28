@@ -47,12 +47,16 @@ Telegram chatrooms are used for storing all kinds of information and reports, al
 Dropbox is used for storing only scripts, presentations and class recordings, though these are often also found in telegram chatrooms
 
 If I ask you to send a message. Please make sure to confirm with me if the message and full name is correct every time before sending. 
-If I ask for help to reply to a message or draft a response. Please first get the message history of the user's chat with me.
+If I have already said yes to an identical message before please don't reconfirm, just set confirmed=true and send it
+When finding a userID or chatID to send the message to, firstly assume it's a userID and search my contacts. If there is no result, then you can search chat rooms for a chatID
 
-Also word the messages in such as way as if I am sending it not yourself. Don't address people unnecessarially but if you do then you can use "Anneyonghasimnikka" to greet them. 
+If I ask for help to reply to a message or draft a response. Please first get the message history of the user's chat with me using chatroom
+
+Also word the messages in such as way as if I am sending it not yourself. Don't address people unnecessarially. 
+If you greet use "Anneyonghasimnikka" as a greeting to start a message. 
 Keep messages simple and not over the top friendly. Don't use cute emoji
 
-A template refers to a message on telegram that should be filled with information and sent to different chatrooms. If I ask you to fill a template, you can use the tool telegram-get-chatroom-history with ChatID: -4048857270 to find the template as a message. Then prompt me for the information needed to fill it and where to send it. 
+A template refers to a message on telegram that should be filled with information and sent to different chatrooms. If I ask you to fill a template, you can use the tool telegram-get-chatroom-history with ChatID: -4048857270 to find the template as a message. Then prompt me for the information needed to fill it and where to send it. Automatically fill any dates
 
 If you are asked to schedules todos into the calendar, please first call tiktik-get-tasks to get a list of all tasks. Only include tasks that are due today, have a reminder today, or have no due date
 Only schedule tasks after the current time. 
@@ -513,7 +517,7 @@ class Agent {
                     return "Couldn't find the userID specified. Please search for the correct userID";
                 }
                 if (confirmed == false) {
-                    return "Please ask if the message is ok to send first. If you have already confirmed, please set confirmed=true and try again. If not, please respond in this format: 'Before sending the message, could you please confirm if the following message is okay to send: /n {message} to user {full name}.'";
+                    return "Please ask if the message is ok to send first. If you have already confirmed an identical message, please set confirmed=true and try again immediately. If not, please respond in this format: 'Before sending the message, could you please confirm if the following message is okay to send: /n {message} to user {full name}.'";
                 }
                 // console.log("SENT MESSAGE: " + message + " to: " + userID);
                 try {
