@@ -66,7 +66,7 @@ event_summary:
 {{
     "event_summary": "Meeting with Joey",
     "event_start_time": "2023-05-06T11:00:00+10:00",
-    "event_end_time": "2023-05-06T15:14:00+10:00",
+    "event_end_time": "2023-05-06T14:00:00+10:00",
     "event_location": "",
     "event_description": "",
     "user_timezone": "Australia/Brisbane"

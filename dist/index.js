@@ -5,6 +5,7 @@ const { Telegraf } = require('telegraf');
 const marked = require('marked');
 const axios = require("axios");
 const Agent = require("./agent");
+const { VoiceSummaryAgent } = require('./agents/voice-summary');
 // Telegram MTPROTO API Configuration
 const { Api, TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
@@ -14,8 +15,10 @@ const apiHash = process.env.TELE_API_HASH;
 const session = new StringSession(process.env.TELE_STR_SESSION);
 const client = new TelegramClient(session, apiId, apiHash, {});
 const bot = new Telegraf(process.env.BOT_TOKEN);
+// Main chat agent
 let agent = new Agent(client);
-agent.init();
+// Voice summary agent
+let summary_agent = new VoiceSummaryAgent();
 // Express routing
 const express = require("express");
 const path = require('path');
@@ -92,10 +95,10 @@ bot.on('text', async (ctx) => {
 });
 app.post('/query', async function (req, res) {
     var messages = req.body.messages[req.body.messages.length - 1].content;
-    console.log(req.body.messages[req.body.messages.length - 1].content);
     var answer = await agent.run(messages);
+    var summary = summary_agent.execute(answer.output);
     res.send({
-        "content": answer.output
+        "content": summary
     });
 });
 app.listen(port, () => {
@@ -105,6 +108,7 @@ app.listen(port, () => {
     // Connect to the Telegram API
     await client.connect();
     agent.init();
+    summary_agent.init();
 })();
 bot.launch();
 // TODO: Add reminder capability with crontab API

@@ -7,6 +7,7 @@ const text_spitter_js_1 = require("../../../text-spitter.js");
 const googleapis_1 = require("googleapis");
 const index_js_1 = require("../prompts/index.js");
 const index_js_2 = require("../utils/index.js");
+const run_view_events_js_1 = require("./run-view-events.js");
 const calendar = googleapis_1.google.calendar('v3');
 const createEvent = async ({ eventSummary, eventStartTime, eventEndTime, userTimezone, eventLocation = '', eventDescription = '' }, calendarId, auth) => {
     const event = {
@@ -48,6 +49,14 @@ const runCreateEvent = async (query, { calendarId, auth, model }) => {
     const date = new Date().toISOString();
     const u_timezone = (0, index_js_2.getTimezoneOffsetInHours)();
     const dayName = new Date().toLocaleString('en-us', { weekday: 'long' });
+    query = query + `
+  
+  The current calendar events are: 
+  ` + (0, run_view_events_js_1.runViewEvents)(query, {
+        auth,
+        model,
+        calendarId: calendarId
+    });
     // Ensure the character limit isn't breached
     query = await (0, text_spitter_js_1.splitText)(query);
     const output = await createEventChain.call({

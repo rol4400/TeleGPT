@@ -7,6 +7,8 @@ import { CREATE_EVENT_PROMPT } from '../prompts/index.js'
 import { getTimezoneOffsetInHours } from '../utils/index.js'
 import type { JWT } from 'googleapis-common'
 
+import { runViewEvents } from './run-view-events.js'
+
 const calendar = google.calendar('v3')
 
 type CreateEventParams = {
@@ -81,6 +83,16 @@ const runCreateEvent = async (
   const date = new Date().toISOString()
   const u_timezone = getTimezoneOffsetInHours()
   const dayName = new Date().toLocaleString('en-us', { weekday: 'long' })
+
+  query = query + `
+  
+  The current calendar events are: 
+  ` + runViewEvents(query, {
+        auth,
+        model,
+        calendarId: calendarId
+    }
+  )
   
   // Ensure the character limit isn't breached
   query = await splitText(query);
