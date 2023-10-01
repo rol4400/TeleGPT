@@ -3,20 +3,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VoiceSummaryAgent = void 0;
 const { ChatOpenAI } = require("langchain/chat_models/openai");
 const { PromptTemplate } = require("langchain/prompts");
-const { loadSummarizationChain } = require("langchain/chains");
+const { LLMChain } = require("langchain/chains");
 const text_spitter_js_1 = require("../../text-spitter.js");
 const summaryTemplate = `
-Your role is to take a query generated from a chatbot and to summarise formatting that doesn't 
-    make sense for the text to speech to speak out loud. For example, you should remove ID numbers, quotations and formatting marks, etc. 
-    If a report is given (i.e. EV report or attendance list), then that makes no sense to read out loud. However, a verse or directly quoted text should
-    remain untouched and as is
-
-Below you find the query from the chatbot:
---------
-{query}
---------
-
+Your role is to take an answer generated from a chatbot and to summarise formatting that doesn't 
+make sense for the text to speech to speak out loud. For example, you should remove ID numbers, quotations and formatting marks, etc. 
+If a report is given (i.e. EV report or attendance list), then that makes no sense to read out loud. However, a verse or directly quoted text should
+remain untouched and as is
 The output will be what is spoken by the text to speech engine and should have no extra comments
+
+The answer crom the chatbot is: {answer} 
 `;
 const SUMMARY_PROMPT = PromptTemplate.fromTemplate(summaryTemplate);
 class VoiceSummaryAgent {
@@ -53,17 +49,17 @@ class VoiceSummaryAgent {
             temperature: 0.3,
             maxRetries: 10
         });
-        this.summary_chain = loadSummarizationChain(this.agent, {
-            type: "refine",
-            verbose: true,
-            questionPrompt: SUMMARY_PROMPT,
+        this.summary_chain = LLMChain({
+            llm: this.agent,
+            SUMMARY_PROMPT,
+            verbose: true
         });
         return this;
     }
     async execute(input) {
         // Ensure the character limit isn't breached
         input = await (0, text_spitter_js_1.splitText)(input);
-        const response = await this.summary_chain.run(input);
+        const response = await this.summary_chain.run({ answer: input });
         return response;
     }
 }
