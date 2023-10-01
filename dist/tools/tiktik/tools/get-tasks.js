@@ -4,6 +4,7 @@ exports.TiktikGetTasks = void 0;
 const tool_descriptions_js_1 = require("./tool-descriptions.js");
 const run_get_tasks_js_1 = require("../api/run-get-tasks.js");
 const tiktik_base_js_1 = require("./tiktik-base.js");
+const text_spitter_js_1 = require("../../../text-spitter.js");
 class TiktikGetTasks extends tiktik_base_js_1.TiktikBase {
     constructor() {
         super();
@@ -20,9 +21,13 @@ class TiktikGetTasks extends tiktik_base_js_1.TiktikBase {
             value: tool_descriptions_js_1.GET_TASK_DESCRIPTION
         });
     }
-    async _call(_query) {
+    async _call(query) {
         const model = this.getModel();
-        return await (0, run_get_tasks_js_1.runGetTask)();
+        var tasks = await (0, run_get_tasks_js_1.runGetTask)(query, {
+            model,
+        });
+        // Ensure the character limit isn't breached
+        return await (0, text_spitter_js_1.splitText)(tasks.text);
     }
 }
 exports.TiktikGetTasks = TiktikGetTasks;

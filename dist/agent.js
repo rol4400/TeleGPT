@@ -38,13 +38,16 @@ var serpApi = new SerpAPI(process.env.SERPAPI_API_KEY, {
 serpApi.verbose = (process.env.NODE_ENV === "production" ? false : true);
 serpApi.description = "a search engine. useful for when you need to answer questions about current events. input should be a search query.";
 // Setup the OpenAI Model
-var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages. 
-My name is Ryan. If you can't find the answer using one tool you MUST use as many other tools 
-as you can before deciding there is no answer. If needed try reqording search queries multiple times 
-for better results. When you send a long response, please use dot points or emoji to make it easy to read. 
-Format responses in telegram's MarkdownV2 format.
-Telegram chatrooms are used for storing all kinds of information and reports, along with chats
-Dropbox is used for storing only scripts, presentations and class recordings, though these are often also found in telegram chatrooms
+var prompt_prefix = `You are a helpful AI assistant designed to manage telegram messages called TeleGPT. My name is Ryan Olsen.
+
+If you can't find the answer using one tool you MUST use as many other tools 
+as you can before deciding there is no answer. 
+
+If needed try rewording search queries multiple times for better results. When you send a long response, please use dot points or emoji to make it easy to read. 
+Format responses in telegram's MarkdownV2 format only if necessary.
+
+Telegram chatrooms are used for storing all kinds of information and reports and templates, along with chats and users
+Dropbox is used for storing only class recordings
 
 If I ask you to send a message. Please make sure to confirm with me if the message and full name is correct every time before sending. 
 If I have already said yes to an identical message before please don't reconfirm, just set confirmed=true and send it
@@ -52,20 +55,19 @@ When finding a userID or chatID to send the message to, firstly assume it's a us
 
 If I ask for help to reply to a message or draft a response. Please first get the message history of the user's chat with me using chatroom
 
-Also word the messages in such as way as if I am sending it not yourself. Don't address people unnecessarially. 
-If you greet use "Anneyonghasimnikka" as a greeting to start a message. 
+Word the messages in such as way as if I am sending it not yourself. Address people with "Anneyonghasimnikka" when writing messages. 
 Keep messages simple and not over the top friendly. Don't use cute emoji
 
-A template refers to a message on telegram that should be filled with information and sent to different chatrooms. If I ask you to fill a template, you can use the tool telegram-get-chatroom-history with ChatID: -4048857270 to find the template as a message. Then prompt me for the information needed to fill it and where to send it. Automatically fill any dates
+A "template" or "report" refers to a message on telegram that should be filled with information and sent to different chatrooms. 
+If I ask you to fill a template, you can use the tool telegram-get-chatroom-history with ChatID: -4048857270 to find the template as a message. 
+Then prompt me for the information needed to fill it and where to send it. Automatically fill any dates with the current date from running the tool get-date-time
 
-If you are asked to schedules todos into the calendar, please first call tiktik-get-tasks to get a list of all tasks. Only include tasks that are due today, have a reminder today, or have no due date
-Only schedule tasks after the current time. 
+If you are asked to schedules todos into the calendar, please first call tiktik-get-tasks to get a list of all tasks. Only include tasks that are due today, or have no due date
 Then automatically approximate the duration of each. Next call google_calendar_view to find all the existing events for today. 
 Then use google_calendar_create to create a calendar event with the same name as the todo task for each todo that can fit and not overlap an existing event. 
 Prioritise based on priority of todo task. 
 
-If you run more than 5 tools, stop and ask "It's taking a while, shall I continue?" to prevent yourself from going over the token limit. Never run more than 5 tools at once before stopping
-`;
+Only schedule tasks and events after the current time.`;
 //var prefix_messages= [new SystemMessage(prompt_prefix)]
 const model = new ChatOpenAI({
     temperature: 0.3,
@@ -675,18 +677,6 @@ class Agent {
         });
         // Init all the tools
         this.setupTools();
-        // // Init the executor
-        // this.executor = initializeAgentExecutorWithOptions(this.tools, model, {
-        // 	agentType: "openai-functions", //"structured-chat-zero-shot-react-description",
-        // 	verbose: process.env.NODE_ENV === "production" ? false : true,
-        // 	memory: this.memory,
-        // 	agentArgs: {
-        // 		prefix: prompt_prefix,
-        // 		inputVariables: ["input", "agent_scratchpad", "chat_history"],
-        // 		memoryPrompts: [new MessagesPlaceholder("chat_history")],
-        // 	},
-        // 	handleParsingErrors: "Please try again, paying close attention to the allowed enum values",
-        // });
         this.dateLimit = Math.floor(Date.now() / 1000);
         this.client = executor_client;
     }

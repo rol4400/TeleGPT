@@ -12,6 +12,7 @@ async function splitText(text: string) {
         return output[0].pageContent;
     } catch (error) {
         console.log("Document splitter error");
+        console.log(error)
         return (text.substring(0, 3000));
     }
 }

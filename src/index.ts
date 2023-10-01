@@ -120,7 +120,7 @@ app.post('/query', async function(req:any, res:any) {
 
     var answer = await agent.run(messages);
 
-    var summary = summary_agent.execute( answer.output);
+    var summary = await summary_agent.execute(answer.output);
 
     res.send({
         "content": summary

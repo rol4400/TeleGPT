@@ -1,2 +1,2 @@
-declare const runGetTask: () => Promise<any>;
+declare const runGetTask: (query: string, { model }: any) => Promise<any>;
 export { runGetTask };

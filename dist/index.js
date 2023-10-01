@@ -96,7 +96,7 @@ bot.on('text', async (ctx) => {
 app.post('/query', async function (req, res) {
     var messages = req.body.messages[req.body.messages.length - 1].content;
     var answer = await agent.run(messages);
-    var summary = summary_agent.execute(answer.output);
+    var summary = await summary_agent.execute(answer.output);
     res.send({
         "content": summary
     });

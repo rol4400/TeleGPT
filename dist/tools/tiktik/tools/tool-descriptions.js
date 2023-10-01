@@ -13,10 +13,18 @@ INPUT example:
 OUTPUT:
 Output is a confirmation of a created task on the todo list.
 `;
-exports.GET_TASK_DESCRIPTION = `A tool gettings all the tasks and reminders on the todo list
+exports.GET_TASK_DESCRIPTION = `A tool gettings all the tasks and reminders on the todo list. Be specific with what information you want about the tasks returned
+This tool should be called again with a new query if information is not known about a task / todo / reminder to get more information
 
 "action": "tiktik-get-tasks",
+"action_input": "List all current tasks"
 
 OUTPUT:
-Output is a JSON array of tasks`;
+A list of tasks
+
+"action": "tiktik-get-tasks",
+"action_input": "Find all tasks with time"
+
+OUTPUT:
+A list of tasks and corresponding times`;
 //# sourceMappingURL=tool-descriptions.js.map

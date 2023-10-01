@@ -2,6 +2,8 @@ import { GET_TASK_DESCRIPTION } from './tool-descriptions.js'
   
 import { runGetTask } from '../api/run-get-tasks.js'
 import { TiktikBase } from './tiktik-base.js'
+
+import { splitText } from "../../../text-spitter.js";
   
 export class TiktikGetTasks extends TiktikBase {
     name = 'tiktik-get-tasks'
@@ -11,9 +13,15 @@ export class TiktikGetTasks extends TiktikBase {
         super()
     }
 
-    async _call(_query: string) {
+    async _call(query: string) {
+
         const model = this.getModel()
 
-        return await runGetTask();
+        var tasks = await runGetTask(query, {
+            model,
+        })
+
+         // Ensure the character limit isn't breached
+        return await splitText(tasks.text);
     }
 }
