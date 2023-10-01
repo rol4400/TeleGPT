@@ -49,7 +49,7 @@ class VoiceSummaryAgent {
             temperature: 0.3,
             maxRetries: 10
         });
-        this.summary_chain = LLMChain({
+        this.summary_chain = new LLMChain({
             llm: this.agent,
             SUMMARY_PROMPT,
             verbose: true
