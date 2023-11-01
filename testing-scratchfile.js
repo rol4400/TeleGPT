@@ -75,6 +75,43 @@ var result = await client.invoke(
           })
         
 
+          try{
+            const chain = await createOpenAPIChain(
+                "https://ticktick.com/openapi.yaml",
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${process.env.TIKTIK_API}`,
+                      },
+                }
+              );
+              const result = await chain.run(query);
+              
+              console.log(JSON.stringify(result, null, 2));
+        
+              return JSON.stringify(result, null, 2);
+        
+            } catch (error) {
+                console.log(error);
+                return "An error occured: " + error;
+            }
+        
+        
+        
+          try {
+            const createdEvent = await calendar.events.insert({
+              auth,
+              calendarId,
+              requestBody: event
+            })
+        
+            return createdEvent
+          } catch (error) {
+            return {
+              error: `An error occurred: ${error}`
+            }
+          }
+
 
       Data = result.messages.map(message => {
         const username = result.users.find(user => user.id === message.fromId)?.username || 'N/A';

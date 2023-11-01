@@ -3,17 +3,36 @@ v: 0
 micros:
   - name: TeleGPT
     src: .
-    engine: nodejs16
+    engine: custom
     primary: true
     commands:
-      - npm install -g n
-      - n lts
-      - n prune
-      - npm install sc
-      - npm install -g tsx
-      - npm run build
+      - curl -fsSL https://get.docker.com -o get-docker.sh
+      - sh get-docker.sh
+      - sh dockerd-rootless-setuptool.sh install
+      - usermod -aG docker root
+      - service docker start
+      - mkdir -p ~/.docker/cli-plugins/
+      - curl -SL https://github.com/docker/compose/releases/download/v2.18.1/docker-compose-linux-x86_64 -o ~/.docker/cli-plugins/docker-compose
+      - chmod +x ~/.docker/cli-plugins/docker-compose
+      -  ~/.docker/cli-plugins/docker-compose --version
+      -  ~/.docker/cli-plugins/docker-compose up
     include:
      - dist
-     - .env
     run: npm run start-dev-server
     dev: npm run start-dev-server
+
+
+# rm -rf /opt/node-16/
+      # - rm -rf /opt/node-14/
+      # - find / -name "node*"
+      # - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.2/install.sh | bash
+      # - chmod +x ~/.nvm/nvm.sh
+      # - source ~/.bashrc
+      # - ~/.nvm/nvm.sh install 18
+      # - ~/.nvm/nvm.sh use lts 
+      # - npm install -g n
+      # - n lts
+      # - n use lts 
+      # - npm install sc
+      # - npm install -g tsx
+      # - npm run build
