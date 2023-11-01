@@ -41,10 +41,7 @@ type RunTiktikAddTask = {
   model: any
 }
 
-const runAddTask = async (
-  query: string,
-  { model }: RunTiktikAddTask
-) => {
+const runAddTask = async (query: string, { model }: RunTiktikAddTask) => {
   const prompt = new PromptTemplate({
     template: ADD_TASK_PROMPT,
     inputVariables: ['date', 'query', 'u_timezone', 'dayName']
