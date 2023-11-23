@@ -13,18 +13,23 @@ An example of a useful implementation is you can ask it "Timebox my todo list it
 - After completing this it will report back to the user via either the telegram bot or the text to speech engine
 
 API Interactions:
+
 ![image](https://github.com/rol4400/TeleGPT/assets/12844299/f1c59554-ce7e-41db-8a88-ad3ed3d562c0)
 
 Voice to text Functionality:
+
 ![image](https://github.com/rol4400/TeleGPT/assets/12844299/9be45d43-8ab5-4a4a-9835-8790d3337dfb)
 
 Web Search Functionality:
+
 ![image](https://github.com/rol4400/TeleGPT/assets/12844299/2c518940-37da-409b-bd95-de49c3d8b086)
 
 Dropbox Integration:
+
 ![image](https://github.com/rol4400/TeleGPT/assets/12844299/9256e955-d6f6-4bf6-b03e-a000ef92b927)
 
 Telegram Integration:
+
 ![image](https://github.com/rol4400/TeleGPT/assets/12844299/8e6a9f3a-a392-4be1-ac6e-513975a4dba3)
 
 ![image](https://github.com/rol4400/TeleGPT/assets/12844299/a701fe33-852d-45fa-b5c2-e023ebad82a8)
